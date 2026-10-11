@@ -1,36 +1,37 @@
 package com.example.lostfound.controller;
-import java.io.ByteArrayInputStream;
-import java.net.URLConnection;
-import com.example.lostfound.model.*;
-import com.example.lostfound.repository.*;
+
+import com.example.lostfound.model.Claim;
+import com.example.lostfound.repository.ClaimRepository;
+import com.example.lostfound.repository.UserRepository;
+import com.example.lostfound.service.ClaimService;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Instant;
+import java.io.ByteArrayInputStream;
+import java.net.URLConnection;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/claims")
 public class ClaimController {
 
+    private final ClaimService claimService;
     private final ClaimRepository claimRepo;
-    private final ItemPostRepository itemRepo;
     private final UserRepository userRepo;
 
-    public ClaimController(ClaimRepository claimRepo,
-                           ItemPostRepository itemRepo,
+    public ClaimController(ClaimService claimService,
+                           ClaimRepository claimRepo,
                            UserRepository userRepo) {
+        this.claimService = claimService;
         this.claimRepo = claimRepo;
-        this.itemRepo = itemRepo;
         this.userRepo = userRepo;
     }
 
-    // =====================================================
-    // USER SUBMIT CLAIM
-    // =====================================================
+    // ── USER: Submit Claim ────────────────────────────────────
     @PostMapping(value = "/{itemId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> submitClaim(
             @PathVariable Long itemId,
@@ -43,191 +44,131 @@ public class ClaimController {
             @RequestParam MultipartFile productProofImage,
             Authentication auth) {
 
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
+
+        if (govProofImage == null || govProofImage.isEmpty()
+                || productProofImage == null || productProofImage.isEmpty()) {
+            return ResponseEntity.badRequest().body("Both proof images are required");
+        }
+
         try {
-
-            if (auth == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Login required");
-            }
-
-            if (govProofImage == null || govProofImage.isEmpty()
-                    || productProofImage == null || productProofImage.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body("Both proof images are required");
-            }
-
-            User user = userRepo.findByUsername(auth.getName())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            ItemPost item = itemRepo.findById(itemId)
-                    .orElseThrow(() -> new RuntimeException("Item not found"));
-
-            // ❌ Only FOUND items can be claimed
-            if (item.isLost()) {
-                return ResponseEntity.badRequest()
-                        .body("Lost items cannot be claimed");
-            }
-
-            // ❌ Cannot claim own item
-            if (item.getReportedBy() != null &&
-                    item.getReportedBy().getId().equals(user.getId())) {
-                return ResponseEntity.badRequest()
-                        .body("You cannot claim your own item");
-            }
-
-            // ❌ Already returned
-            if ("RETURNED".equalsIgnoreCase(item.getStatus())) {
-                return ResponseEntity.badRequest()
-                        .body("Item already returned");
-            }
-
-            // ❌ Duplicate claim
-            boolean alreadyClaimed = claimRepo.findByClaimant(user)
-                    .stream()
-                    .anyMatch(c -> c.getItemPost().getId().equals(itemId));
-
-            if (alreadyClaimed) {
-                return ResponseEntity.badRequest()
-                        .body("You already claimed this item");
-            }
-
-            Claim claim = Claim.builder()
-                    .itemPost(item)
-                    .claimant(user)
-                    .fullName(fullName)
-                    .age(age)
-                    .mobile(mobile)
-                    .proofType(govProofName)
-                    .reason(reason)
-                    .govProofImage(govProofImage.getBytes())
-                    .productProofImage(productProofImage.getBytes())
-                    .status("PENDING")
-                    .createdAt(Instant.now())
-                    .build();
-
-            claimRepo.save(claim);
-
-            return ResponseEntity.ok("Claim submitted successfully");
-
+            Claim claim = claimService.submitClaim(
+                    itemId, auth.getName(), fullName, age, mobile,
+                    govProofName, reason,
+                    govProofImage.getBytes(), productProofImage.getBytes());
+            return ResponseEntity.ok(Map.of("msg", "Claim submitted successfully", "claimId", claim.getId()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error while submitting claim");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error submitting claim");
         }
     }
 
-    // =====================================================
-    // ADMIN VIEW PENDING CLAIMS
-    // =====================================================
+    // ── USER: My Claims ───────────────────────────────────────
+    @GetMapping("/my")
+    public ResponseEntity<?> myClaims(Authentication auth) {
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
+        var user = userRepo.findByUsername(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(claimRepo.findByClaimant(user));
+    }
+
+    // ── ADMIN: List Pending Claims ────────────────────────────
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/pending")
     public ResponseEntity<List<Claim>> getPendingClaims() {
-
-        List<Claim> pending = claimRepo.findAll()
-                .stream()
-                .filter(c -> "PENDING".equalsIgnoreCase(c.getStatus()))
-                .toList();
-
-        return ResponseEntity.ok(pending);
+        return ResponseEntity.ok(claimRepo.findByStatus("PENDING_VERIFICATION"));
     }
 
-    // =====================================================
-    // ADMIN VIEW GOV PROOF IMAGE
-    // =====================================================
- @PreAuthorize("hasRole('ADMIN')")
-@GetMapping("/proof/gov/{id}")
-public ResponseEntity<byte[]> viewGovProof(@PathVariable Long id) throws Exception {
-
-    Claim claim = claimRepo.findById(id).orElseThrow();
-    byte[] image = claim.getGovProofImage();
-
-    // 🔥 Automatically detect image type (jpg/png)
-    String mimeType = URLConnection.guessContentTypeFromStream(
-            new ByteArrayInputStream(image));
-
-    if (mimeType == null) {
-        mimeType = "image/jpeg"; // fallback
+    // ── ADMIN: List All Claims ────────────────────────────────
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/all")
+    public ResponseEntity<List<Claim>> getAllClaims() {
+        return ResponseEntity.ok(claimRepo.findAll());
     }
 
-    return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(mimeType))
-            .body(image);
-}
-
-//     =====================================================
-//     ADMIN VIEW PRODUCT PROOF IMAGE
-//     =====================================================
-@PreAuthorize("hasRole('ADMIN')")
-@GetMapping("/proof/product/{id}")
-public ResponseEntity<byte[]> viewProductProof(@PathVariable Long id) throws Exception {
-
-    Claim claim = claimRepo.findById(id).orElseThrow();
-    byte[] image = claim.getProductProofImage();
-
-    String mimeType = URLConnection.guessContentTypeFromStream(
-            new ByteArrayInputStream(image));
-
-    if (mimeType == null) {
-        mimeType = "image/jpeg";
+    // ── ADMIN: Approve ────────────────────────────────────────
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<?> approveClaim(@PathVariable Long id, Authentication auth) {
+        try {
+            Claim claim = claimService.approveClaim(id, auth.getName());
+            return ResponseEntity.ok(Map.of("msg", "Claim approved", "status", claim.getStatus()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error approving claim");
+        }
     }
 
-    return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(mimeType))
-            .body(image);
-}
+    // ── ADMIN: Reject ─────────────────────────────────────────
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<?> rejectClaim(@PathVariable Long id,
+                                          @RequestParam(required = false, defaultValue = "") String notes,
+                                          Authentication auth) {
+        try {
+            Claim claim = claimService.rejectClaim(id, auth.getName(), notes);
+            return ResponseEntity.ok(Map.of("msg", "Claim rejected", "status", claim.getStatus()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error rejecting claim");
+        }
+    }
 
-    // =====================================================
-    // ADMIN APPROVE / REJECT
-    // =====================================================
+    // ── ADMIN: Confirm Return ─────────────────────────────────
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/confirm-return")
+    public ResponseEntity<?> confirmReturn(@PathVariable Long id, Authentication auth) {
+        try {
+            Claim claim = claimService.confirmReturn(id, auth.getName());
+            return ResponseEntity.ok(Map.of("msg", "Item marked as returned. Notifications sent.", "status", claim.getStatus()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error confirming return");
+        }
+    }
+
+    // ── ADMIN: Legacy resolve endpoint (kept for compatibility) ─
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/resolve")
-    public ResponseEntity<?> resolveClaim(
-            @PathVariable Long id,
-            @RequestParam String status,
-            Authentication auth) {
-
-        if (!status.equalsIgnoreCase("APPROVED")
-                && !status.equalsIgnoreCase("REJECTED")) {
-            return ResponseEntity.badRequest()
-                    .body("Invalid status");
-        }
-
-        Claim claim = claimRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Claim not found"));
-
-        User admin = userRepo.findByUsername(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
-
-        claim.setStatus(status.toUpperCase());
-        claim.setResolvedBy(admin);
-        claim.setResolvedAt(Instant.now());
-
-        // If approved → mark item returned
+    public ResponseEntity<?> resolveClaim(@PathVariable Long id,
+                                           @RequestParam String status,
+                                           Authentication auth) {
         if ("APPROVED".equalsIgnoreCase(status)) {
-            ItemPost item = claim.getItemPost();
-            item.setStatus("RETURNED");
-            itemRepo.save(item);
+            return approveClaim(id, auth);
+        } else if ("REJECTED".equalsIgnoreCase(status)) {
+            return rejectClaim(id, "", auth);
         }
-
-        claimRepo.save(claim);
-
-        return ResponseEntity.ok("Claim " + status);
+        return ResponseEntity.badRequest().body("Invalid status. Use approve or reject endpoints.");
     }
 
-    // =====================================================
-    // USER VIEW OWN CLAIMS
-    // =====================================================
-    @GetMapping("/my")
-    public ResponseEntity<?> myClaims(Authentication auth) {
+    // ── ADMIN: Gov Proof Image ────────────────────────────────
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/proof/gov/{id}")
+    public ResponseEntity<byte[]> viewGovProof(@PathVariable Long id) throws Exception {
+        var claim = claimRepo.findById(id).orElseThrow();
+        return buildImageResponse(claim.getGovProofImage());
+    }
 
-        if (auth == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Login required");
-        }
+    // ── ADMIN: Product Proof Image ────────────────────────────
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/proof/product/{id}")
+    public ResponseEntity<byte[]> viewProductProof(@PathVariable Long id) throws Exception {
+        var claim = claimRepo.findById(id).orElseThrow();
+        return buildImageResponse(claim.getProductProofImage());
+    }
 
-        User user = userRepo.findByUsername(auth.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return ResponseEntity.ok(claimRepo.findByClaimant(user));
+    private ResponseEntity<byte[]> buildImageResponse(byte[] image) throws Exception {
+        if (image == null) return ResponseEntity.notFound().build();
+        String mimeType = URLConnection.guessContentTypeFromStream(new ByteArrayInputStream(image));
+        if (mimeType == null) mimeType = "image/jpeg";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(mimeType))
+                .body(image);
     }
 }

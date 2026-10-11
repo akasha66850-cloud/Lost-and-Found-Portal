@@ -1,232 +1,1261 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Admin Dashboard</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Lost &amp; Found Portal</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<link rel="stylesheet" href="/css/dashboard.css">
+<style>
+  .admin-nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: var(--bg-card);
+    padding: 10px 14px;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .admin-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  .admin-nav-btn:hover {
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+  }
+  .admin-nav-btn.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+    border-color: rgba(255,255,255,0.2);
+  }
+  .admin-nav-btn .pill-badge {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .admin-nav-btn:not(.active) .pill-badge {
+    background: rgba(255,255,255,0.1);
+    color: #94a3b8;
+  }
+  .evidence-preview-img {
+    width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    cursor: pointer;
+    transition: transform .2s;
+  }
+  .evidence-preview-img:hover {
+    transform: scale(1.02);
+  }
+  .view-panel {
+    display: none;
+  }
+  .view-panel.active {
+    display: block;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
 </head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-mount"></div>
+  <div class="content-wrapper">
+    <div id="topbar-mount"></div>
+    <div class="main-content">
 
-<body class="bg-light">
+      <!-- Header -->
+      <div class="page-header">
+        <div>
+          <h2><i class="fas fa-shield-halved me-2" style="color:#2563eb"></i>Administrator Management</h2>
+          <p style="color:var(--text-muted);font-size:13px;margin:2px 0 0">Manage items, verify claims, confirm physical returns, and supervise users.</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline btn-sm" onclick="refreshCurrentView()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+      </div>
 
-<!-- ================= NAVBAR ================= -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
-<div class="container">
+      <!-- Admin Feature Navigation Tabs -->
+      <nav class="admin-nav">
+        <button class="admin-nav-btn active" onclick="switchTab('dashboard', this)">
+          <i class="fas fa-tachometer-alt"></i> Dashboard
+        </button>
+        <button class="admin-nav-btn" onclick="switchTab('pending', this)">
+          <i class="fas fa-clipboard-check"></i> Pending Verification
+          <span class="pill-badge" id="tabPendingBadge">0</span>
+        </button>
+        <button class="admin-nav-btn" onclick="switchTab('returns', this)">
+          <i class="fas fa-handshake"></i> Return Management
+          <span class="pill-badge" id="tabReturnBadge">0</span>
+        </button>
+        <button class="admin-nav-btn" onclick="switchTab('claims', this)">
+          <i class="fas fa-list-check"></i> All Claims
+        </button>
+        <button class="admin-nav-btn" onclick="switchTab('items', this)">
+          <i class="fas fa-boxes-stacked"></i> All Items
+        </button>
+        <button class="admin-nav-btn" onclick="switchTab('users', this)">
+          <i class="fas fa-users-gear"></i> Users
+        </button>
+        <button class="admin-nav-btn" onclick="switchTab('reports', this)">
+          <i class="fas fa-chart-pie"></i> Reports
+        </button>
+        <button class="admin-nav-btn" onclick="switchTab('notifications', this)">
+          <i class="fas fa-bell"></i> System Notifications
+        </button>
+      </nav>
 
-<a class="navbar-brand fw-bold">Lost & Found Portal</a>
+      <!-- ============================================================== -->
+      <!-- TAB 1: ADMIN DASHBOARD OVERVIEW                                -->
+      <!-- ============================================================== -->
+      <div id="view-dashboard" class="view-panel active">
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Total Lost Items</div>
+              <div class="stat-value" id="adminStatLost"><span class="spinner"></span></div>
+              <div class="stat-sub">Active reported items</div>
+            </div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon"><i class="fas fa-hand-holding"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Total Found Items</div>
+              <div class="stat-value" id="adminStatFound"><span class="spinner"></span></div>
+              <div class="stat-sub">Awaiting rightful owner</div>
+            </div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon"><i class="fas fa-check-double"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Returned Items</div>
+              <div class="stat-value" id="adminStatReturned"><span class="spinner"></span></div>
+              <div class="stat-sub">Handovers completed</div>
+            </div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Pending Claims</div>
+              <div class="stat-value" id="adminStatPending"><span class="spinner"></span></div>
+              <div class="stat-sub">Needs admin review</div>
+            </div>
+          </div>
+        </div>
 
-<div class="ms-auto d-flex align-items-center gap-2">
+        <div class="content-grid">
+          <!-- Pending Action Alert Box -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fas fa-triangle-exclamation text-warning me-2"></i>Urgent Tasks Awaiting Verification</span>
+              <button class="btn btn-outline btn-sm" onclick="switchTab('pending', document.querySelectorAll('.admin-nav-btn')[1])">Review All</button>
+            </div>
+            <div class="card-body p-0">
+              <div id="dashboardPendingList" style="padding:16px">
+                <span class="spinner"></span> Loading pending verification requests...
+              </div>
+            </div>
+          </div>
 
-  <a href="/" class="btn btn-light btn-sm rounded-pill px-3">
-    <i class="fa fa-home me-1"></i> Home
-  </a>
+          <!-- Quick Return Summary Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fas fa-handshake text-success me-2"></i>Awaiting Physical Handover</span>
+            </div>
+            <div class="card-body">
+              <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px">
+                These claims have been <b>Approved</b>. Verify the claimant's identity at the desk and click <b>Confirm Return</b> to complete the cycle.
+              </div>
+              <div id="dashboardAwaitingCountBox" style="background:#f0fdf4;border:1px solid #bbf7d0;padding:16px;border-radius:10px;text-align:center;margin-bottom:16px">
+                <div style="font-size:32px;font-weight:700;color:#16a34a" id="adminStatAwaitingHandover">0</div>
+                <div style="font-size:13px;font-weight:600;color:#15803d">Items Ready for Desk Handover</div>
+              </div>
+              <button class="btn btn-success w-100" onclick="switchTab('returns', document.querySelectorAll('.admin-nav-btn')[2])">
+                <i class="fas fa-handshake"></i> Go to Return Management
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <span class="badge bg-light text-dark rounded-pill px-3 py-2">
-    <i class="fa fa-user-circle me-1"></i>
-    <span id="user"></span>
-  </span>
+      <!-- ============================================================== -->
+      <!-- TAB 2: PENDING VERIFICATION (EXAMINE EVIDENCE)                 -->
+      <!-- ============================================================== -->
+      <div id="view-pending" class="view-panel">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <span class="card-title"><i class="fas fa-clipboard-check text-primary me-2"></i>Pending Evidence Verification</span>
+              <div style="font-size:12px;color:var(--text-muted)">Examine government ID and product proofs submitted by claimants</div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div id="pendingVerificationContainer" style="padding:20px">
+              <span class="spinner"></span> Loading pending claims...
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <button onclick="logout()" class="btn btn-danger btn-sm rounded-pill px-3">
-    <i class="fa fa-sign-out-alt me-1"></i> Logout
-  </button>
+      <!-- ============================================================== -->
+      <!-- TAB 3: RETURN MANAGEMENT (CONFIRM HANDOVER)                    -->
+      <!-- ============================================================== -->
+      <div id="view-returns" class="view-panel">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <span class="card-title"><i class="fas fa-handshake text-success me-2"></i>Physical Handover &amp; Return Confirmation</span>
+              <div style="font-size:12px;color:var(--text-muted)">Verify the claimant is at the desk, hand over the item, and record completion</div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div id="returnManagementContainer" style="padding:20px">
+              <span class="spinner"></span> Loading approved claims awaiting handover...
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <!-- ============================================================== -->
+      <!-- TAB 4: ALL CLAIMS                                              -->
+      <!-- ============================================================== -->
+      <div id="view-claims" class="view-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-list-check me-2"></i>All Ownership Claims</span>
+            <div style="display:flex;gap:8px">
+              <select id="filterClaimStatus" class="form-control" style="width:auto;font-size:13px" onchange="renderClaimsTable()">
+                <option value="ALL">All Statuses</option>
+                <option value="PENDING_VERIFICATION">Pending Verification</option>
+                <option value="APPROVED_AWAITING_HANDOVER">Approved (Awaiting Return)</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive" style="border:none">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Item Title</th>
+                  <th>Claimant</th>
+                  <th>Contact</th>
+                  <th>Proof Type</th>
+                  <th>Status</th>
+                  <th>Submitted</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="allClaimsTableBody">
+                <tr><td colspan="8" class="text-center p-4"><span class="spinner"></span> Loading claims...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- TAB 5: ALL ITEMS MANAGEMENT                                    -->
+      <!-- ============================================================== -->
+      <div id="view-items" class="view-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-boxes-stacked me-2"></i>Manage All Item Reports</span>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <input type="text" id="adminItemSearch" class="form-control" style="width:200px;font-size:13px" placeholder="Search title/location..." oninput="filterAdminItems()">
+              <select id="adminItemFilterType" class="form-control" style="width:auto;font-size:13px" onchange="filterAdminItems()">
+                <option value="ALL">All Types</option>
+                <option value="LOST">Lost Items</option>
+                <option value="FOUND">Found Items</option>
+              </select>
+              <select id="adminItemFilterStatus" class="form-control" style="width:auto;font-size:13px" onchange="filterAdminItems()">
+                <option value="ALL">All Statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="RETURNED">Returned</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="REMOVED">Removed</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive" style="border:none">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Item</th>
+                  <th>Category</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Reported By</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminItemsTableBody">
+                <tr><td colspan="9" class="text-center p-4"><span class="spinner"></span> Loading items...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- TAB 6: USERS MANAGEMENT                                        -->
+      <!-- ============================================================== -->
+      <div id="view-users" class="view-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-users-gear me-2"></i>User &amp; Administrator Accounts</span>
+            <input type="text" id="adminUserSearch" class="form-control" style="width:240px;font-size:13px" placeholder="Search by name, email, role..." oninput="filterAdminUsers()">
+          </div>
+          <div class="table-responsive" style="border:none">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Joined Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersTableBody">
+                <tr><td colspan="7" class="text-center p-4"><span class="spinner"></span> Loading users...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- TAB 7: REPORTS & RETURN HISTORY                                -->
+      <!-- ============================================================== -->
+      <div id="view-reports" class="view-panel">
+        <div class="content-grid" style="margin-bottom:20px">
+          <!-- Category breakdown card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fas fa-chart-pie me-2 text-primary"></i>Items by Category</span>
+            </div>
+            <div class="card-body">
+              <div id="reportCategoryContainer">Loading category statistics...</div>
+            </div>
+          </div>
+
+          <!-- Return summary summary card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fas fa-award me-2 text-success"></i>Return Success Metric</span>
+            </div>
+            <div class="card-body text-center" style="padding:32px 20px">
+              <div style="font-size:48px;font-weight:800;color:#16a34a" id="reportTotalReturnsCount">0</div>
+              <div style="font-weight:600;font-size:15px;margin-top:4px">Verified Items Returned to Owners</div>
+              <p style="font-size:13px;color:var(--text-muted);margin-top:8px">Full chain-of-custody recorded with timestamps and admin signature.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- History table -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-clock-rotate-left me-2"></i>Completed Return Log</span>
+          </div>
+          <div class="table-responsive" style="border:none">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Claim ID</th>
+                  <th>Item Title</th>
+                  <th>Category</th>
+                  <th>Claimant Name</th>
+                  <th>Claimant Contact</th>
+                  <th>Handover Confirmed By</th>
+                  <th>Completion Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="reportHistoryTableBody">
+                <tr><td colspan="7" class="text-center p-4">Loading return history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- TAB 8: SYSTEM NOTIFICATIONS MONITOR                           -->
+      <!-- ============================================================== -->
+      <div id="view-notifications" class="view-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-bell me-2"></i>System-wide Activity &amp; Notifications Log</span>
+          </div>
+          <div class="card-body p-0">
+            <div id="adminNotificationsList">
+              <div class="p-4 text-center"><span class="spinner"></span> Loading system notifications...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /content-wrapper -->
+</div><!-- /app-layout -->
+
+<!-- ================================================================== -->
+<!-- EVIDENCE REVIEW MODAL                                              -->
+<!-- ================================================================== -->
+<div class="modal fade" id="evidenceModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content" style="border-radius:14px;border:none">
+      <div class="modal-header" style="border-bottom:1px solid var(--border)">
+        <div>
+          <h5 class="modal-title mb-0" id="evidenceModalTitle">Examine Claim Evidence</h5>
+          <small class="text-muted" id="evidenceModalSub">Review student's documents and claim details</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:24px">
+        <div class="row g-4">
+          <!-- Left: Claim & Item Info -->
+          <div class="col-lg-5">
+            <div class="card h-100" style="background:#f8fafc">
+              <div class="card-body">
+                <h6 style="font-weight:700;color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:8px">
+                  <i class="fas fa-box text-primary me-2"></i>Item Information
+                </h6>
+                <div id="evidenceItemDetails" class="mb-3" style="font-size:13px"></div>
+
+                <h6 style="font-weight:700;color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:8px;margin-top:16px">
+                  <i class="fas fa-user-check text-success me-2"></i>Claimant Information
+                </h6>
+                <div id="evidenceClaimantDetails" class="mb-3" style="font-size:13px"></div>
+
+                <h6 style="font-weight:700;color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:8px;margin-top:16px">
+                  <i class="fas fa-comment-dots text-warning me-2"></i>Identification Reason
+                </h6>
+                <div id="evidenceReasonDetails" style="font-size:13px;background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border)"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Document Previews -->
+          <div class="col-lg-7">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-header py-2" style="font-weight:600;font-size:13px">
+                    <i class="fas fa-id-card me-1 text-primary"></i> Government / Student ID
+                  </div>
+                  <div class="card-body p-2 text-center" style="background:#f1f5f9;min-height:220px;display:flex;align-items:center;justify-content:center">
+                    <img id="evidenceGovImg" class="evidence-preview-img" onclick="openFullImage(this.src)" title="Click to view full size">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-header py-2" style="font-weight:600;font-size:13px">
+                    <i class="fas fa-receipt me-1 text-success"></i> Product Ownership Proof
+                  </div>
+                  <div class="card-body p-2 text-center" style="background:#f1f5f9;min-height:220px;display:flex;align-items:center;justify-content:center">
+                    <img id="evidenceProductImg" class="evidence-preview-img" onclick="openFullImage(this.src)" title="Click to view full size">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="alert alert-info mt-3 mb-0" style="font-size:12px">
+              <i class="fas fa-magnifying-glass me-1"></i> Tip: Click on any proof image to open the high-resolution version in a new tab.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="evidenceModalActions" style="border-top:1px solid var(--border)">
+        <!-- Dynamic Approve / Reject buttons injected here -->
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- ================================================================== -->
+<!-- CONFIRM RETURN MODAL                                               -->
+<!-- ================================================================== -->
+<div class="modal fade" id="confirmReturnModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:none">
+      <div class="modal-header" style="border-bottom:1px solid var(--border)">
+        <h5 class="modal-title"><i class="fas fa-handshake text-success me-2"></i>Confirm Physical Handover</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:var(--text-primary)">
+          Are you sure you want to mark this item as <b>physically returned</b>?
+        </p>
+        <div id="confirmReturnMetaBox" style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;margin-bottom:14px"></div>
+        <div class="alert alert-warning mb-0" style="font-size:12px">
+          <i class="fas fa-triangle-exclamation me-1"></i>
+          <b>Spring Boot Automated Workflow:</b> Clicking confirm will mark the claim as <b>COMPLETED</b>, the found report as <b>RESOLVED</b>, any linked lost report as <b>RETURNED</b>, and automatically send notifications to both the student who lost the item and the student who found it.
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--border)">
+        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="confirmReturnFinalBtn">
+          <i class="fas fa-check-double"></i> Confirm Return &amp; Complete
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
-</nav>
 
-<!-- ================= CONTENT ================= -->
-<div class="container mt-4">
-<h4 class="mb-3">Pending Claims</h4>
-
-<table class="table table-bordered table-hover shadow-sm bg-white">
-<thead class="table-dark">
-<tr>
-<th>ID</th>
-<th>Item Details</th>
-<th>Claim Details</th>
-<th>Status</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody id="rows"></tbody>
-</table>
+<!-- ================================================================== -->
+<!-- REJECT NOTES MODAL                                                 -->
+<!-- ================================================================== -->
+<div class="modal fade" id="rejectClaimModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:none">
+      <div class="modal-header" style="border-bottom:1px solid var(--border)">
+        <h5 class="modal-title"><i class="fas fa-times-circle text-danger me-2"></i>Reject Ownership Claim</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-muted)">Please enter a clear explanation for the student regarding why the claim was not approved:</p>
+        <textarea id="adminRejectReasonInput" class="form-control" rows="3" placeholder="e.g. Identity proof does not match, or serial number mismatch..."></textarea>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--border)">
+        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="adminRejectFinalBtn">
+          <i class="fas fa-ban"></i> Reject Claim
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/app.js"></script>
 <script>
+// State caches
+let allAdminClaims = [];
+let allAdminItems = [];
+let allAdminUsers = [];
+let activeTabName = 'dashboard';
+let evidenceModalInstance = null;
+let confirmReturnModalInstance = null;
+let rejectClaimModalInstance = null;
+let targetClaimIdForAction = null;
 
-/* =======================
-   ADMIN ACCESS CHECK
-======================= */
-window.onload = () => {
-
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
-  const user = localStorage.getItem("username");
-
-  if (!token || role !== "ADMIN") {
-    alert("Access denied. Admin only.");
-    window.location = "/login.html";
+(async () => {
+  await initPage({ activePage: 'admin', pageTitle: 'Admin Dashboard', requireAuth: true });
+  if (getRole() !== 'ADMIN') {
+    alert('Access restricted to administrators.');
+    window.location = '/index.html';
     return;
   }
 
-  document.getElementById("user").innerText = user;
-  loadClaims();
-};
+  // Initialize Bootstrap modals
+  evidenceModalInstance = new bootstrap.Modal(document.getElementById('evidenceModal'));
+  confirmReturnModalInstance = new bootstrap.Modal(document.getElementById('confirmReturnModal'));
+  rejectClaimModalInstance = new bootstrap.Modal(document.getElementById('rejectClaimModal'));
 
+  // Initial load
+  loadAdminOverview();
+})();
 
-/* =======================
-   LOAD PENDING CLAIMS
-======================= */
-async function loadClaims(){
+// ── TAB SWITCHING ─────────────────────────────────────────────
+function switchTab(tabName, btn) {
+  activeTabName = tabName;
+  document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
 
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(`view-${tabName}`);
+  if (target) target.classList.add('active');
+
+  // Load tab specific data
+  if (tabName === 'dashboard') loadAdminOverview();
+  else if (tabName === 'pending') loadPendingVerification();
+  else if (tabName === 'returns') loadReturnManagement();
+  else if (tabName === 'claims') loadAllClaims();
+  else if (tabName === 'items') loadAllItems();
+  else if (tabName === 'users') loadAllUsers();
+  else if (tabName === 'reports') loadReportsData();
+  else if (tabName === 'notifications') loadSystemNotifications();
+}
+
+function refreshCurrentView() {
+  switchTab(activeTabName, document.querySelector(`.admin-nav-btn.active`));
+}
+
+// ── 1. DASHBOARD OVERVIEW ─────────────────────────────────────
+async function loadAdminOverview() {
   try {
+    const res = await apiFetch('/api/admin/stats');
+    if (!res.ok) throw new Error();
+    const s = await res.json();
 
-    let res = await fetch("/api/claims/pending", {
-      headers:{
-        "Authorization":"Bearer " + localStorage.getItem("token")
-      }
-    });
+    document.getElementById('adminStatLost').textContent     = s.totalLost ?? 0;
+    document.getElementById('adminStatFound').textContent    = s.totalFound ?? 0;
+    document.getElementById('adminStatReturned').textContent = s.totalReturned ?? 0;
+    document.getElementById('adminStatPending').textContent  = s.pendingClaims ?? 0;
+    document.getElementById('adminStatAwaitingHandover').textContent = s.awaitingHandover ?? 0;
 
-    if(res.status === 401 || res.status === 403){
-      alert("Session expired or unauthorized");
-      logout();
+    // Badges on tabs
+    document.getElementById('tabPendingBadge').textContent = s.pendingClaims ?? 0;
+    document.getElementById('tabReturnBadge').textContent  = s.awaitingHandover ?? 0;
+
+    // Also load urgent items
+    loadDashboardPendingPreview();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function loadDashboardPendingPreview() {
+  try {
+    const res = await apiFetch('/api/claims/all');
+    if (!res.ok) return;
+    const claims = await res.json();
+    allAdminClaims = claims;
+    const pending = claims.filter(c => c.status === 'PENDING_VERIFICATION');
+    const el = document.getElementById('dashboardPendingList');
+
+    if (!pending.length) {
+      el.innerHTML = `
+        <div class="empty-state py-4 text-center">
+          <i class="fas fa-circle-check text-success" style="font-size:36px;margin-bottom:8px"></i>
+          <h6>All caught up!</h6>
+          <p class="text-muted mb-0">No claims currently pending evidence verification.</p>
+        </div>`;
       return;
     }
 
-    let data = await res.json();
-    let html = "";
+    el.innerHTML = pending.slice(0, 4).map(c => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-weight:700;font-size:14px">${escHtml(c.itemPost?.title || 'Unknown Item')}</div>
+          <div style="font-size:12px;color:var(--text-muted)">
+            Claimant: <b>${escHtml(c.fullName)}</b> (${escHtml(c.mobile)}) · Proof: ${escHtml(c.proofType)}
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openEvidenceModal(${c.id})">
+          <i class="fas fa-eye"></i> Examine Evidence
+        </button>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error(e);
+  }
+}
 
-    if(data.length === 0){
-      html = `
-        <tr>
-          <td colspan="5" class="text-center text-muted">
-            No pending claims
-          </td>
-        </tr>`;
+// ── 2. PENDING VERIFICATION ───────────────────────────────────
+async function loadPendingVerification() {
+  const container = document.getElementById('pendingVerificationContainer');
+  container.innerHTML = '<span class="spinner"></span> Loading pending claims...';
+  try {
+    const res = await apiFetch('/api/claims/all');
+    allAdminClaims = await res.json();
+    const pending = allAdminClaims.filter(c => c.status === 'PENDING_VERIFICATION');
+    document.getElementById('tabPendingBadge').textContent = pending.length;
+
+    if (!pending.length) {
+      container.innerHTML = `
+        <div class="empty-state text-center py-5">
+          <i class="fas fa-check-circle text-success" style="font-size:48px;margin-bottom:12px"></i>
+          <h4>No Pending Claims</h4>
+          <p class="text-muted">There are no claimant submissions currently waiting for evidence review.</p>
+        </div>`;
+      return;
     }
 
-    data.forEach(c=>{
+    container.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px">
+        ${pending.map(c => `
+          <div class="card" style="box-shadow:var(--shadow-sm);border:1px solid var(--border)">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge badge-pending">PENDING VERIFICATION</span>
+                <span style="font-size:12px;color:var(--text-muted);margin-left:6px">Claim #${c.id}</span>
+              </div>
+              <small class="text-muted">${c.createdAt ? c.createdAt.substring(0,10) : ''}</small>
+            </div>
+            <div class="card-body">
+              <h5 style="font-weight:700;font-size:16px;margin-bottom:8px">${escHtml(c.itemPost?.title || 'Item')}</h5>
+              <div style="font-size:13px;margin-bottom:12px;color:var(--text-muted)">
+                <div><i class="fas fa-tag me-1"></i> Category: ${escHtml(c.itemPost?.category || '—')}</div>
+                <div><i class="fas fa-location-dot me-1"></i> Location: ${escHtml(c.itemPost?.location || '—')}</div>
+              </div>
+              <div style="background:#f8fafc;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px">
+                <div><b>Claimant:</b> ${escHtml(c.fullName)} (Age ${c.age})</div>
+                <div><b>Contact:</b> ${escHtml(c.mobile)}</div>
+                <div><b>Proof Submitted:</b> ${escHtml(c.proofType)}</div>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-primary btn-sm flex-grow-1" onclick="openEvidenceModal(${c.id})">
+                  <i class="fas fa-magnifying-glass"></i> Examine Evidence
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+  } catch (e) {
+    container.innerHTML = '<div class="alert alert-danger">Failed to load pending claims.</div>';
+  }
+}
 
-      html += `
+// ── 3. RETURN MANAGEMENT ──────────────────────────────────────
+async function loadReturnManagement() {
+  const container = document.getElementById('returnManagementContainer');
+  container.innerHTML = '<span class="spinner"></span> Loading return management...';
+  try {
+    const res = await apiFetch('/api/claims/all');
+    allAdminClaims = await res.json();
+    const approved = allAdminClaims.filter(c => c.status === 'APPROVED_AWAITING_HANDOVER');
+    document.getElementById('tabReturnBadge').textContent = approved.length;
+
+    if (!approved.length) {
+      container.innerHTML = `
+        <div class="empty-state text-center py-5">
+          <i class="fas fa-box-open text-muted" style="font-size:48px;margin-bottom:12px"></i>
+          <h4>No Items Awaiting Handover</h4>
+          <p class="text-muted">Approved claims will appear here once you approve a student's verification.</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:20px">
+        ${approved.map(c => `
+          <div class="card border-success" style="box-shadow:var(--shadow-sm)">
+            <div class="card-header bg-success-subtle d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge badge-approved"><i class="fas fa-circle-check"></i> APPROVED FOR RETURN</span>
+                <span style="font-size:12px;color:var(--text-muted);margin-left:6px">#${c.id}</span>
+              </div>
+              <small class="text-muted">Approved: ${c.resolvedAt ? c.resolvedAt.substring(0,10) : ''}</small>
+            </div>
+            <div class="card-body">
+              <h5 style="font-weight:700;font-size:16px;margin-bottom:6px">${escHtml(c.itemPost?.title || 'Item')}</h5>
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
+                Category: <b>${escHtml(c.itemPost?.category || '—')}</b> · Found At: <b>${escHtml(c.itemPost?.location || '—')}</b>
+              </div>
+
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:12px;border-radius:8px;font-size:13px;margin-bottom:16px">
+                <div style="font-weight:700;color:#16a34a;margin-bottom:4px"><i class="fas fa-user-tag me-1"></i> Recipient at Desk:</div>
+                <div><b>Student:</b> ${escHtml(c.fullName)}</div>
+                <div><b>Phone:</b> ${escHtml(c.mobile)}</div>
+                <div><b>ID Type:</b> ${escHtml(c.proofType)}</div>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline btn-sm" onclick="openEvidenceModal(${c.id})">
+                  <i class="fas fa-id-card"></i> View ID
+                </button>
+                <button class="btn btn-success btn-sm flex-grow-1" onclick="openConfirmReturnModal(${c.id})">
+                  <i class="fas fa-handshake"></i> Confirm Return
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+  } catch (e) {
+    container.innerHTML = '<div class="alert alert-danger">Failed to load return management records.</div>';
+  }
+}
+
+// ── 4. ALL CLAIMS ─────────────────────────────────────────────
+async function loadAllClaims() {
+  try {
+    const res = await apiFetch('/api/claims/all');
+    allAdminClaims = await res.json();
+    renderClaimsTable();
+  } catch (e) {
+    document.getElementById('allClaimsTableBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Failed to load claims</td></tr>';
+  }
+}
+
+function renderClaimsTable() {
+  const filter = document.getElementById('filterClaimStatus').value;
+  const filtered = filter === 'ALL' ? allAdminClaims : allAdminClaims.filter(c => c.status === filter);
+  const tbody = document.getElementById('allClaimsTableBody');
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-muted">No claims match the filter criteria.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => `
+    <tr>
+      <td style="font-size:12px;color:var(--text-muted)">#${c.id}</td>
+      <td style="font-weight:600">${escHtml(c.itemPost?.title || 'Unknown')}</td>
+      <td>${escHtml(c.fullName)}</td>
+      <td style="font-size:13px">${escHtml(c.mobile)}</td>
+      <td><span class="badge badge-outline" style="background:#f1f5f9;color:#334155">${escHtml(c.proofType)}</span></td>
+      <td>${statusBadge(c.status)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${c.createdAt ? c.createdAt.substring(0,10) : '—'}</td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="openEvidenceModal(${c.id})">
+          <i class="fas fa-eye"></i> View
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── 5. ALL ITEMS MANAGEMENT ───────────────────────────────────
+async function loadAllItems() {
+  try {
+    const res = await apiFetch('/api/admin/items');
+    allAdminItems = await res.json();
+    renderAdminItemsTable(allAdminItems);
+  } catch (e) {
+    document.getElementById('adminItemsTableBody').innerHTML = '<tr><td colspan="9" class="text-danger text-center">Failed to load items</td></tr>';
+  }
+}
+
+function filterAdminItems() {
+  const q = document.getElementById('adminItemSearch').value.toLowerCase().trim();
+  const typeFilter = document.getElementById('adminItemFilterType').value;
+  const statusFilter = document.getElementById('adminItemFilterStatus').value;
+
+  const filtered = allAdminItems.filter(item => {
+    const matchQ = !q || (item.title && item.title.toLowerCase().includes(q)) || (item.location && item.location.toLowerCase().includes(q));
+    const matchType = typeFilter === 'ALL' || (typeFilter === 'LOST' && item.lost) || (typeFilter === 'FOUND' && !item.lost);
+    const matchStatus = statusFilter === 'ALL' || item.status === statusFilter;
+    return matchQ && matchType && matchStatus;
+  });
+
+  renderAdminItemsTable(filtered);
+}
+
+function renderAdminItemsTable(items) {
+  const tbody = document.getElementById('adminItemsTableBody');
+  if (!items.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center p-4 text-muted">No items found matching the filter.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = items.map(i => `
+    <tr>
+      <td style="font-size:12px;color:var(--text-muted)">#${i.id}</td>
+      <td>
+        <div style="font-weight:600">${escHtml(i.title)}</div>
+        ${i.colour ? `<small class="text-muted">Color: ${escHtml(i.colour)}</small>` : ''}
+      </td>
+      <td>${escHtml(i.category || '—')}</td>
+      <td>${typeBadge(i.lost)}</td>
+      <td style="font-size:13px">${escHtml(i.location || '—')}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${i.dateEvent || '—'}</td>
+      <td>${statusBadge(i.status)}</td>
+      <td style="font-size:13px">${escHtml(i.reportedBy?.username || '—')}</td>
+      <td>
+        <div class="dropdown d-inline-block">
+          <button class="btn btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Action</button>
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li><a class="dropdown-item" href="/item.html?id=${i.id}" target="_blank"><i class="fas fa-external-link-alt me-2"></i> View Page</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateItemStatus(${i.id}, 'active')"><i class="fas fa-check text-success me-2"></i> Set Active</a></li>
+            <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateItemStatus(${i.id}, 'remove')"><i class="fas fa-ban text-warning me-2"></i> Mark Removed</a></li>
+            <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateItemStatus(${i.id}, 'returned')"><i class="fas fa-check-double text-primary me-2"></i> Mark Returned</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteItemRecord(${i.id})"><i class="fas fa-trash me-2"></i> Delete Item</a></li>
+          </ul>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function updateItemStatus(itemId, action) {
+  try {
+    const res = await apiFetch(`/api/admin/items/${itemId}/verify?action=${action}`, { method: 'PUT' });
+    if (res.ok) {
+      showToast(`Item status updated to ${action.toUpperCase()}`, 'success');
+      loadAllItems();
+      loadAdminOverview();
+    } else {
+      showToast('Failed to update status', 'error');
+    }
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+async function deleteItemRecord(itemId) {
+  if (!confirm('Are you sure you want to permanently delete this item?')) return;
+  try {
+    const res = await apiFetch(`/api/admin/items/${itemId}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Item deleted successfully', 'success');
+      loadAllItems();
+      loadAdminOverview();
+    } else {
+      showToast('Failed to delete item', 'error');
+    }
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// ── 6. USERS MANAGEMENT ───────────────────────────────────────
+async function loadAllUsers() {
+  try {
+    const res = await apiFetch('/api/admin/users');
+    allAdminUsers = await res.json();
+    renderAdminUsersTable(allAdminUsers);
+  } catch (e) {
+    document.getElementById('adminUsersTableBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Failed to load users</td></tr>';
+  }
+}
+
+function filterAdminUsers() {
+  const q = document.getElementById('adminUserSearch').value.toLowerCase().trim();
+  const filtered = allAdminUsers.filter(u => {
+    return !q ||
+      (u.username && u.username.toLowerCase().includes(q)) ||
+      (u.fullName && u.fullName.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.role && u.role.toLowerCase().includes(q));
+  });
+  renderAdminUsersTable(filtered);
+}
+
+function renderAdminUsersTable(users) {
+  const tbody = document.getElementById('adminUsersTableBody');
+  const myUsername = getUsername();
+
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-muted">No users found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = users.map(u => {
+    const isAdmin = u.role === 'ADMIN';
+    const isSelf = u.username === myUsername;
+
+    return `
       <tr>
-
-        <!-- CLAIM ID -->
-        <td>${c.id}</td>
-
-        <!-- ITEM DETAILS -->
+        <td style="font-size:12px;color:var(--text-muted)">#${u.id}</td>
+        <td><b>${escHtml(u.username)}</b> ${isSelf ? '<span class="badge bg-secondary ms-1">You</span>' : ''}</td>
+        <td>${escHtml(u.fullName || '—')}</td>
+        <td>${escHtml(u.email || '—')}</td>
         <td>
-          <b>${c.itemPost.title}</b><br>
-          <small>${c.itemPost.description ?? ""}</small><br>
-          <small><b>Location:</b> ${c.itemPost.location ?? ""}</small><br>
-          <small><b>Date:</b> ${c.itemPost.dateEvent}</small><br>
-          <small><i class="fa fa-phone me-1"></i>${c.itemPost.mobile}</small>
+          <span class="badge ${isAdmin ? 'bg-danger' : 'bg-primary'}">${escHtml(u.role)}</span>
         </td>
-
-        <!-- CLAIM DETAILS -->
+        <td style="font-size:12px;color:var(--text-muted)">${u.createdAt ? u.createdAt.substring(0,10) : '—'}</td>
         <td>
-          <b>Name:</b> ${c.fullName}<br>
-          <b>Age:</b> ${c.age}<br>
-          <b>Mobile:</b> ${c.mobile}<br>
-          <b>Proof Type:</b> ${c.proofType}<br>
-          <b>Reason:</b> ${c.reason}<br><br>
-
-          <button onclick="viewProof('gov', ${c.id})"
-                  class="btn btn-outline-primary btn-sm mb-1">
-            <i class="fa fa-id-card"></i> Gov Proof
-          </button>
-
-          <button onclick="viewProof('product', ${c.id})"
-                  class="btn btn-outline-secondary btn-sm">
-            <i class="fa fa-box"></i> Product Proof
-          </button>
+          ${isSelf ? '<small class="text-muted">Current Account</small>' : `
+            <button class="btn btn-outline btn-sm ${isAdmin ? 'btn-outline-danger' : 'btn-outline-primary'}"
+                    onclick="toggleUserRole(${u.id}, '${isAdmin ? 'USER' : 'ADMIN'}', '${escHtml(u.username)}')">
+              <i class="fas fa-user-shield me-1"></i> ${isAdmin ? 'Demote to User' : 'Promote to Admin'}
+            </button>
+          `}
         </td>
-
-        <!-- STATUS -->
-        <td>
-          <span class="badge bg-warning">${c.status}</span>
-        </td>
-
-        <!-- ACTION -->
-        <td>
-          <button onclick="resolveClaim(${c.id},'APPROVED')"
-                  class="btn btn-success btn-sm mb-1">
-            <i class="fa fa-check"></i> Approve
-          </button>
-
-          <button onclick="resolveClaim(${c.id},'REJECTED')"
-                  class="btn btn-danger btn-sm">
-            <i class="fa fa-times"></i> Reject
-          </button>
-        </td>
-
       </tr>
-      `;
-    });
-
-    document.getElementById("rows").innerHTML = html;
-
-  } catch (err) {
-    alert("Error loading claims");
-  }
+    `;
+  }).join('');
 }
 
+async function toggleUserRole(userId, newRole, username) {
+  const actionText = newRole === 'ADMIN' ? 'promote this user to Administrator' : 'demote this user to regular User';
+  if (!confirm(`Are you sure you want to ${actionText} (${username})?`)) return;
 
-/* =======================
-   VIEW PROOF (TOKEN SAFE)
-======================= */
-async function viewProof(type, id){
-
-  const token = localStorage.getItem("token");
-
-  let res = await fetch(`/api/claims/proof/${type}/${id}`, {
-    headers:{
-      "Authorization":"Bearer " + token
+  try {
+    const res = await apiFetch(`/api/admin/users/${userId}/role?role=${newRole}`, { method: 'PUT' });
+    if (res.ok) {
+      showToast(`User ${username} updated to ${newRole}`, 'success');
+      loadAllUsers();
+    } else {
+      const msg = await res.text();
+      showToast(msg || 'Failed to update user role', 'error');
     }
-  });
-
-  if(!res.ok){
-    alert("Unable to load proof");
-    return;
+  } catch (e) {
+    showToast('Network error', 'error');
   }
-
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  window.open(url, "_blank");
 }
 
+// ── 7. REPORTS & RETURN HISTORY ───────────────────────────────
+async function loadReportsData() {
+  try {
+    const res = await apiFetch('/api/admin/reports');
+    const data = await res.json();
 
-/* =======================
-   APPROVE / REJECT
-======================= */
-async function resolveClaim(id,status){
+    document.getElementById('reportTotalReturnsCount').textContent = data.totalReturns ?? 0;
 
-  let res = await fetch(`/api/claims/${id}/resolve?status=${status}`,{
-    method:"POST",
-    headers:{
-      "Authorization":"Bearer " + localStorage.getItem("token")
+    // Category distribution
+    const catDist = data.categoryDistribution || {};
+    const catContainer = document.getElementById('reportCategoryContainer');
+    const catKeys = Object.keys(catDist);
+
+    if (!catKeys.length) {
+      catContainer.innerHTML = '<p class="text-muted">No category data yet.</p>';
+    } else {
+      const maxVal = Math.max(...Object.values(catDist), 1);
+      catContainer.innerHTML = catKeys.map(k => {
+        const count = catDist[k];
+        const pct = Math.round((count / maxVal) * 100);
+        return `
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1" style="font-size:13px;font-weight:600">
+              <span>${escHtml(k)}</span>
+              <span>${count} item${count > 1 ? 's' : ''}</span>
+            </div>
+            <div class="progress" style="height:8px;border-radius:4px">
+              <div class="progress-bar bg-primary" role="progressbar" style="width:${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
-  });
 
-  if(!res.ok){
-    alert("Action failed");
-    return;
+    // Return history table
+    const history = data.returnHistory || [];
+    const hTbody = document.getElementById('reportHistoryTableBody');
+    if (!history.length) {
+      hTbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-muted">No returns completed yet.</td></tr>';
+      return;
+    }
+
+    hTbody.innerHTML = history.map(h => `
+      <tr>
+        <td style="font-size:12px;color:var(--text-muted)">#${h.claimId}</td>
+        <td style="font-weight:600">${escHtml(h.itemTitle)}</td>
+        <td>${escHtml(h.category)}</td>
+        <td>${escHtml(h.claimantName)}</td>
+        <td>${escHtml(h.claimantMobile)}</td>
+        <td><span class="badge bg-secondary">${escHtml(h.confirmedBy)}</span></td>
+        <td style="font-size:12px;color:var(--text-muted)">${h.handoverDate ? h.handoverDate.substring(0,19).replace('T',' ') : '—'}</td>
+      </tr>
+    `).join('');
+
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// ── 8. SYSTEM NOTIFICATIONS ───────────────────────────────────
+async function loadSystemNotifications() {
+  const container = document.getElementById('adminNotificationsList');
+  container.innerHTML = '<div class="p-4 text-center"><span class="spinner"></span> Loading...</div>';
+  try {
+    const res = await apiFetch('/api/admin/notifications');
+    const notifs = await res.json();
+
+    if (!notifs.length) {
+      container.innerHTML = '<div class="p-5 text-center text-muted">No system notifications recorded.</div>';
+      return;
+    }
+
+    container.innerHTML = notifs.map(n => `
+      <div class="notif-item">
+        <div class="notif-icon" style="background:#eff6ff;color:#2563eb">
+          <i class="fas fa-bell"></i>
+        </div>
+        <div class="notif-body">
+          <div class="d-flex justify-content-between">
+            <div style="font-weight:600;font-size:13px">${escHtml(n.type || 'NOTIFICATION')}</div>
+            <div class="notif-time">${n.createdAt ? timeAgo(n.createdAt) : ''}</div>
+          </div>
+          <div class="notif-msg mt-1">${escHtml(n.message)}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+            Recipient: <b>${escHtml(n.recipient?.username || 'User')}</b>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="alert alert-danger m-3">Failed to load system notifications.</div>';
+  }
+}
+
+// ==============================================================
+// MODAL WORKFLOWS (EXAMINE EVIDENCE, APPROVE, REJECT, RETURN)
+// ==============================================================
+
+async function openEvidenceModal(claimId) {
+  targetClaimIdForAction = claimId;
+  const claim = allAdminClaims.find(c => c.id === claimId);
+  if (!claim) return;
+
+  document.getElementById('evidenceModalTitle').textContent = `Claim #${claim.id} — ${claim.itemPost?.title || 'Item'}`;
+
+  // Item details
+  document.getElementById('evidenceItemDetails').innerHTML = `
+    <div><b>Title:</b> ${escHtml(claim.itemPost?.title || '—')}</div>
+    <div><b>Category:</b> ${escHtml(claim.itemPost?.category || '—')}</div>
+    <div><b>Found Location:</b> ${escHtml(claim.itemPost?.location || '—')}</div>
+    <div><b>Date Found:</b> ${claim.itemPost?.dateEvent || '—'}</div>
+    <div><b>Reported By:</b> ${escHtml(claim.itemPost?.reportedBy?.username || '—')}</div>
+  `;
+
+  // Claimant details
+  document.getElementById('evidenceClaimantDetails').innerHTML = `
+    <div><b>Full Name:</b> ${escHtml(claim.fullName)}</div>
+    <div><b>Age:</b> ${claim.age}</div>
+    <div><b>Contact Phone:</b> ${escHtml(claim.mobile)}</div>
+    <div><b>Proof Document Type:</b> ${escHtml(claim.proofType)}</div>
+    <div><b>Status:</b> ${statusBadge(claim.status)}</div>
+  `;
+
+  // Reason
+  document.getElementById('evidenceReasonDetails').textContent = claim.reason || 'No specific description provided.';
+
+  // Image URLs
+  const token = getToken();
+  document.getElementById('evidenceGovImg').src = `/api/claims/proof/gov/${claim.id}?t=${Date.now()}`;
+  document.getElementById('evidenceProductImg').src = `/api/claims/proof/product/${claim.id}?t=${Date.now()}`;
+
+  // Modal actions based on status
+  const actionDiv = document.getElementById('evidenceModalActions');
+  if (claim.status === 'PENDING_VERIFICATION') {
+    actionDiv.innerHTML = `
+      <button type="button" class="btn btn-danger btn-sm" onclick="promptRejectModal(${claim.id})">
+        <i class="fas fa-times me-1"></i> Reject Claim
+      </button>
+      <button type="button" class="btn btn-success btn-sm ms-auto" onclick="executeApprove(${claim.id})">
+        <i class="fas fa-check me-1"></i> Approve Claim
+      </button>
+    `;
+  } else if (claim.status === 'APPROVED_AWAITING_HANDOVER') {
+    actionDiv.innerHTML = `
+      <span class="text-success me-auto" style="font-size:13px;font-weight:600">
+        <i class="fas fa-circle-check me-1"></i> Approved — Ready for Physical Handover
+      </span>
+      <button type="button" class="btn btn-success btn-sm" onclick="openConfirmReturnModal(${claim.id})">
+        <i class="fas fa-handshake me-1"></i> Confirm Item Handover
+      </button>
+    `;
+  } else {
+    actionDiv.innerHTML = `<button type="button" class="btn btn-outline btn-sm ms-auto" data-bs-dismiss="modal">Close</button>`;
   }
 
-  alert("Claim " + status);
-  loadClaims();
+  evidenceModalInstance.show();
 }
 
-
-/* =======================
-   LOGOUT
-======================= */
-function logout(){
-  localStorage.clear();
-  window.location = "/login.html";
+function openFullImage(url) {
+  if (url) window.open(url, '_blank');
 }
 
+// ── APPROVE ───────────────────────────────────────────────────
+async function executeApprove(claimId) {
+  try {
+    const res = await apiFetch(`/api/claims/${claimId}/approve`, { method: 'PATCH' });
+    if (res.ok) {
+      showToast('Claim approved! Student notified to collect item at desk.', 'success');
+      evidenceModalInstance.hide();
+      loadAdminOverview();
+      if (activeTabName === 'pending') loadPendingVerification();
+      if (activeTabName === 'claims') loadAllClaims();
+    } else {
+      const msg = await res.text();
+      showToast(msg || 'Failed to approve claim', 'error');
+    }
+  } catch (e) {
+    showToast('Network error approving claim', 'error');
+  }
+}
+
+// ── REJECT ────────────────────────────────────────────────────
+function promptRejectModal(claimId) {
+  targetClaimIdForAction = claimId;
+  document.getElementById('adminRejectReasonInput').value = '';
+  evidenceModalInstance.hide();
+  rejectClaimModalInstance.show();
+}
+
+document.getElementById('adminRejectFinalBtn').onclick = async () => {
+  const notes = document.getElementById('adminRejectReasonInput').value.trim();
+  try {
+    const res = await apiFetch(`/api/claims/${targetClaimIdForAction}/reject?notes=${encodeURIComponent(notes)}`, { method: 'PATCH' });
+    if (res.ok) {
+      showToast('Claim rejected and student notified with reason.', 'info');
+      rejectClaimModalInstance.hide();
+      loadAdminOverview();
+      if (activeTabName === 'pending') loadPendingVerification();
+      if (activeTabName === 'claims') loadAllClaims();
+    } else {
+      const msg = await res.text();
+      showToast(msg || 'Failed to reject claim', 'error');
+    }
+  } catch (e) {
+    showToast('Network error rejecting claim', 'error');
+  }
+};
+
+// ── CONFIRM RETURN WORKFLOW (CORE FUNCTION) ───────────────────
+function openConfirmReturnModal(claimId) {
+  targetClaimIdForAction = claimId;
+  const claim = allAdminClaims.find(c => c.id === claimId);
+  if (!claim) return;
+
+  evidenceModalInstance.hide();
+
+  document.getElementById('confirmReturnMetaBox').innerHTML = `
+    <div><b>Item:</b> ${escHtml(claim.itemPost?.title || 'Unknown')}</div>
+    <div><b>Claimant:</b> ${escHtml(claim.fullName)}</div>
+    <div><b>Phone:</b> ${escHtml(claim.mobile)}</div>
+    <div><b>ID Document:</b> ${escHtml(claim.proofType)}</div>
+  `;
+
+  confirmReturnModalInstance.show();
+}
+
+document.getElementById('confirmReturnFinalBtn').onclick = async () => {
+  const btn = document.getElementById('confirmReturnFinalBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Confirming return...';
+
+  try {
+    const res = await apiFetch(`/api/claims/${targetClaimIdForAction}/confirm-return`, { method: 'POST' });
+    if (res.ok) {
+      showToast('Item physically returned! Statuses resolved & notifications sent to both students.', 'success');
+      confirmReturnModalInstance.hide();
+      loadAdminOverview();
+      if (activeTabName === 'returns') loadReturnManagement();
+      if (activeTabName === 'claims') loadAllClaims();
+    } else {
+      const msg = await res.text();
+      showToast(msg || 'Failed to confirm return', 'error');
+    }
+  } catch (e) {
+    showToast('Network error confirming return', 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-check-double"></i> Confirm Return & Complete';
+};
+
+function escHtml(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 </script>
-
 </body>
 </html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications — Lost &amp; Found Portal</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-mount"></div>
+  <div class="content-wrapper">
+    <div id="topbar-mount"></div>
+    <div class="main-content">
+
+      <div class="page-header">
+        <h2><i class="fas fa-bell me-2" style="color:#2563eb"></i>Notifications</h2>
+        <button class="btn btn-outline btn-sm" onclick="markAllRead()">
+          <i class="fas fa-check-double"></i> Mark All Read
+        </button>
+      </div>
+
+      <div class="card">
+        <div id="notifList" style="min-height:200px">
+          <div style="text-align:center;padding:40px"><span class="spinner"></span> Loading…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+(async () => {
+  await initPage({ activePage: 'notifications', pageTitle: 'Notifications', requireAuth: true });
+  loadNotifications();
+})();
+
+async function loadNotifications() {
+  try {
+    const res = await apiFetch('/api/notifications');
+    if (res.status === 401) { window.location = '/login.html'; return; }
+    const notifs = await res.json();
+    renderNotifications(notifs);
+  } catch {
+    document.getElementById('notifList').innerHTML =
+      '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load notifications</p></div>';
+  }
+}
+
+const typeIconMap = {
+  MATCH_FOUND:     { icon: 'link', bg: '#fefce8', color: '#ca8a04' },
+  CLAIM_SUBMITTED: { icon: 'file-alt', bg: '#eff6ff', color: '#2563eb' },
+  CLAIM_APPROVED:  { icon: 'check-circle', bg: '#f0fdf4', color: '#16a34a' },
+  CLAIM_REJECTED:  { icon: 'times-circle', bg: '#fef2f2', color: '#dc2626' },
+  ITEM_RETURNED:   { icon: 'check-double', bg: '#ede9fe', color: '#7c3aed' },
+  GENERAL:         { icon: 'info-circle', bg: '#f1f5f9', color: '#64748b' },
+};
+
+function renderNotifications(notifs) {
+  const el = document.getElementById('notifList');
+  if (!notifs.length) {
+    el.innerHTML = `<div class="empty-state">
+      <i class="fas fa-bell-slash"></i>
+      <h4>No notifications</h4>
+      <p>You're all caught up! Notifications will appear here when there are updates.</p>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = notifs.map(n => {
+    const t = typeIconMap[n.type] || typeIconMap.GENERAL;
+    return `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markRead(${n.id}, this)">
+      <div class="notif-icon" style="background:${t.bg};color:${t.color}">
+        <i class="fas fa-${t.icon}"></i>
+      </div>
+      <div class="notif-body">
+        <div class="notif-msg">${escHtml(n.message)}</div>
+        <div class="notif-time">
+          ${n.createdAt ? timeAgo(n.createdAt) : ''}
+          ${!n.read ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-left:6px;vertical-align:middle"></span>' : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function markRead(id, el) {
+  if (el.closest('.notif-item').classList.contains('unread')) {
+    try {
+      await apiFetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+      el.closest('.notif-item').classList.remove('unread');
+    } catch { /* ignore */ }
+  }
+}
+
+async function markAllRead() {
+  try {
+    await apiFetch('/api/notifications/read-all', { method: 'PATCH' });
+    document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+    // Clear badge
+    const badge = document.getElementById('topbarBadge');
+    if (badge) { badge.textContent = ''; badge.classList.remove('visible'); }
+    showToast('All notifications marked as read', 'success');
+  } catch {
+    showToast('Failed to mark notifications as read', 'error');
+  }
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

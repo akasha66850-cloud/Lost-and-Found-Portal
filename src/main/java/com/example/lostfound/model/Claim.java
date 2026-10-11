@@ -9,11 +9,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "claims")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Claim {
 
@@ -21,7 +17,7 @@ public class Claim {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ================= RELATIONS =================
+    // ===================== RELATIONS =====================
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "item_id", nullable = false)
@@ -38,7 +34,12 @@ public class Claim {
     @JsonIgnore
     private User resolvedBy;
 
-    // ================= CLAIM DETAILS =================
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "handover_confirmed_by")
+    @JsonIgnore
+    private User handoverConfirmedBy;
+
+    // ===================== CLAIM DETAILS =====================
 
     @Column(nullable = false)
     private String fullName;
@@ -55,7 +56,7 @@ public class Claim {
     @Column(nullable = false, length = 1000)
     private String reason;
 
-    // ================= PROOF IMAGES =================
+    // ===================== PROOF IMAGES =====================
 
     @Lob
     @Column(nullable = false, columnDefinition = "LONGBLOB")
@@ -67,19 +68,33 @@ public class Claim {
     @JsonIgnore
     private byte[] productProofImage;
 
-    // ================= STATUS =================
+    // ===================== STATUS =====================
 
+    /**
+     * Status values:
+     *  PENDING_VERIFICATION      – submitted, awaiting admin review
+     *  APPROVED_AWAITING_HANDOVER – admin approved, item not yet physically handed over
+     *  REJECTED                  – admin rejected
+     *  COMPLETED                 – item physically handed over and confirmed
+     */
     @Column(nullable = false)
     private String status;
+
+    @Column(length = 1000)
+    private String reviewNotes;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     private Instant resolvedAt;
 
+    private Instant handoverConfirmedAt;
+
     @PrePersist
     public void onCreate() {
         this.createdAt = Instant.now();
-        this.status = "PENDING";
+        if (this.status == null) {
+            this.status = "PENDING_VERIFICATION";
+        }
     }
 }

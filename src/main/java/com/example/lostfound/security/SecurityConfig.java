@@ -24,42 +24,53 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-   @Bean
-public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-    JwtAuthFilter jwtFilter = new JwtAuthFilter(jwtUtil);
+        JwtAuthFilter jwtFilter = new JwtAuthFilter(jwtUtil);
 
-    http.csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(auth -> auth
+        http.csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
 
-            // ✅ PUBLIC HTML
-            .requestMatchers(
-                "/", "/index.html",
-                "/login.html", "/register.html",
-                "/item.html", "/post.html",
-                "/my-claims.html",
-                "/admin-claims.html",   // ✅ ALLOW HTML
-                "/static/**",
-                 "/css/**",
-                 "/js/**"
-            ).permitAll()
+                // ── Public HTML pages ───────────────────────────────
+                .requestMatchers(
+                    "/", "/index.html",
+                    "/login.html", "/register.html",
+                    "/item.html", "/post.html",
+                    "/report-lost.html", "/report-found.html",
+                    "/my-claims.html", "/my-reports.html",
+                    "/admin-claims.html",
+                    "/admin.html",
+                    "/notifications.html",
+                    "/search.html",
+                    "/dashboard.html"
+                ).permitAll()
 
-            // ✅ PUBLIC APIs
-            .requestMatchers("/api/items/**", "/api/auth/**").permitAll()
+                // ── Static assets ───────────────────────────────────
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()
 
-            // 🔐 ADMIN APIs ONLY
-            .requestMatchers("/api/claims/pending",
-                 "/api/claims/*/resolve",
-                 "/api/claims/proof/**")
-.hasRole("ADMIN")
-            
+                // ── Public APIs ──────────────────────────────────────
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
+                .requestMatchers("/api/dashboard/**").permitAll()
 
-            // 🔐 ALL OTHER APIs NEED LOGIN
+                // ── Admin-only APIs ──────────────────────────────────
+                .requestMatchers(
+                    "/api/claims/pending",
+                    "/api/claims/all",
+                    "/api/claims/*/resolve",
+                    "/api/claims/*/approve",
+                    "/api/claims/*/reject",
+                    "/api/claims/*/confirm-return",
+                    "/api/claims/proof/**",
+                    "/api/admin/**"
+                ).hasRole("ADMIN")
 
-            .anyRequest().authenticated()
-        )
-        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                // ── Everything else requires authentication ───────────
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-    return http.build();
-}
+        return http.build();
+    }
 }

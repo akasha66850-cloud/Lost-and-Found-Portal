@@ -1,183 +1,312 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Lost & Found Portal</title>
-
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-  <!-- External CSS -->
-  <link rel="stylesheet" href="/css/login.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Lost &amp; Found Portal</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .auth-card {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 520px;
+    padding: 48px 44px;
+    box-shadow: 0 25px 60px rgba(0,0,0,.35);
+  }
+  .brand {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .brand-icon {
+    width: 68px; height: 68px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border-radius: 18px;
+    display: inline-grid;
+    place-items: center;
+    font-size: 32px;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+  .brand h2 { font-size: 26px; font-weight: 800; color: #0f172a; }
+  .brand p  { font-size: 16px; color: #64748b; margin-top: 6px; }
+  .tab-btns {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    background: #f1f5f9;
+    padding: 6px;
+    border-radius: 12px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    background: transparent;
+    color: #64748b;
+  }
+  .tab-btn.active {
+    background: #fff;
+    color: #0f172a;
+    box-shadow: 0 2px 6px rgba(0,0,0,.1);
+  }
+  .form-group { margin-bottom: 22px; }
+  .form-label { display: block; font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 8px; }
+  .input-wrap {
+    position: relative;
+  }
+  .input-wrap i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 18px;
+  }
+  .form-control {
+    width: 100%;
+    padding: 14px 16px 14px 48px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+  }
+  .form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.15);
+  }
+  .btn-submit {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .btn-submit:hover { opacity: .92; transform: translateY(-1px); }
+  .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+  .msg { margin-bottom: 20px; padding: 14px 18px; border-radius: 8px; font-size: 15px; display: flex; align-items: center; gap: 10px; }
+  .msg-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .msg-error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+  .spinner {
+    display: inline-block; width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+    border-radius: 50%; animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
 </head>
-
 <body>
 
-<!-- ================= NAVBAR ================= -->
-<nav class="navbar navbar-expand-lg custom-navbar">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="#">
-      <i class="fa-solid fa-magnifying-glass-location"></i> Lost & Found
-    </a>
+<div class="auth-card">
+  <div class="brand">
+    <div class="brand-icon"><i class="fas fa-map-marker-alt"></i></div>
+    <h2>Lost &amp; Found Portal</h2>
+    <p>University Lost &amp; Found Management System</p>
+  </div>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
+  <div class="tab-btns">
+    <button class="tab-btn active" id="loginTab" onclick="showLogin()">Sign In</button>
+    <button class="tab-btn" id="registerTab" onclick="showRegister()">Create Account</button>
+  </div>
+
+  <div id="msgArea"></div>
+
+  <!-- LOGIN FORM -->
+  <form id="loginForm" onsubmit="doLogin(event)">
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <div class="input-wrap">
+        <i class="fas fa-user"></i>
+        <input id="lUsername" class="form-control" placeholder="Enter your username" required autocomplete="username">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="input-wrap">
+        <i class="fas fa-lock"></i>
+        <input id="lPassword" type="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+      </div>
+    </div>
+    <button type="submit" class="btn-submit" id="loginBtn">
+      <i class="fas fa-sign-in-alt"></i> Sign In
     </button>
+  </form>
 
-    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="index.html">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="">Report Item</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="index.html">View Items</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="index.html">Contact</a>
-        </li>
-      </ul>
+  <!-- REGISTER FORM -->
+  <form id="registerForm" onsubmit="doRegister(event)" style="display:none">
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <div class="input-wrap">
+        <i class="fas fa-id-card"></i>
+        <input id="rName" class="form-control" placeholder="Your full name" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <div class="input-wrap">
+        <i class="fas fa-user"></i>
+        <input id="rUsername" class="form-control" placeholder="Choose a username" required autocomplete="username">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <div class="input-wrap">
+        <i class="fas fa-envelope"></i>
+        <input id="rEmail" type="email" class="form-control" placeholder="Your email address" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="input-wrap">
+        <i class="fas fa-lock"></i>
+        <input id="rPassword" type="password" class="form-control" placeholder="Min 6 characters" required autocomplete="new-password">
+      </div>
+    </div>
+    <button type="submit" class="btn-submit" id="registerBtn">
+      <i class="fas fa-user-plus"></i> Create Account
+    </button>
+  </form>
+
+  <!-- Developer Credit Badge -->
+  <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #e2e8f0; text-align: center;">
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+      <div style="color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; margin-bottom: 2px;">
+        <i class="fas fa-code text-primary me-1"></i> DEVELOPED BY
+      </div>
+      <div style="color: #0f172a; font-size: 13px; font-weight: 800; letter-spacing: 0.3px;">
+        AKASH P
+      </div>
+      <div style="color: #475569; font-size: 11px; font-weight: 600; margin-top: 1px;">
+        III CSE A (PSG ITECH)
+      </div>
     </div>
   </div>
-</nav>
-
-<!-- ================= LOGIN SECTION ================= -->
-<div class="main-section d-flex justify-content-center align-items-center">
-
-  <div class="card login-card shadow-lg p-4">
-
-    <div class="text-center mb-3">
-      <h4 class="fw-bold">Lost & Found Portal</h4>
-      <small class="text-muted">Secure Login</small>
-    </div>
-
-    <!-- LOGIN FORM -->
-    <form id="loginForm">
-      <div class="input-group mb-2">
-        <span class="input-group-text"><i class="fa fa-user"></i></span>
-        <input id="username" class="form-control" placeholder="Username" required>
-      </div>
-
-      <div class="input-group mb-3">
-        <span class="input-group-text"><i class="fa fa-lock"></i></span>
-        <input id="password" type="password" class="form-control" placeholder="Password" required>
-      </div>
-
-      <button class="btn btn-primary w-100 mb-2">Login</button>
-
-      <div class="text-center mt-3">
-  <a href="#" onclick="showRegister()" class="create-link">
-    Create New Account
-  </a>
-</div>
-    </form>
-
-    <!-- REGISTER FORM -->
-    <form id="registerForm" style="display:none">
-      <input id="rname" class="form-control mb-2" placeholder="Full Name" required>
-      <input id="rusername" class="form-control mb-2" placeholder="Username" required>
-      <input id="remail" class="form-control mb-2" placeholder="Email" required>
-      <input id="rpassword" type="password" class="form-control mb-3" placeholder="Password" required>
-      <button class="btn btn-success w-100 mb-2">Register</button>
-      <div class="text-center">
-        <small><a href="#" onclick="showLogin()">Back to Login</a></small>
-      </div>
-    </form>
-
-  </div>
-
 </div>
 
 <script>
-
-/* =====================
-   FORM SWITCH
-===================== */
-function showRegister(){
-  document.getElementById("loginForm").style.display="none";
-  document.getElementById("registerForm").style.display="block";
+function showLogin() {
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('registerForm').style.display = 'none';
+  document.getElementById('loginTab').classList.add('active');
+  document.getElementById('registerTab').classList.remove('active');
+  document.getElementById('msgArea').innerHTML = '';
+}
+function showRegister() {
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'block';
+  document.getElementById('registerTab').classList.add('active');
+  document.getElementById('loginTab').classList.remove('active');
+  document.getElementById('msgArea').innerHTML = '';
 }
 
-function showLogin(){
-  document.getElementById("registerForm").style.display="none";
-  document.getElementById("loginForm").style.display="block";
+function showMsg(msg, type) {
+  document.getElementById('msgArea').innerHTML =
+    `<div class="msg msg-${type}">
+       <i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i>
+       ${msg}
+     </div>`;
 }
 
-/* =====================
-   LOGIN API
-===================== */
-document.getElementById("loginForm").addEventListener("submit", async (e)=>{
+async function doLogin(e) {
   e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
 
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+  const username = document.getElementById('lUsername').value;
+  const password = document.getElementById('lPassword').value;
 
   try {
-    const res = await fetch("/api/auth/login",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json"},
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
 
-    if(!res.ok){
-      alert("Invalid Username or Password");
-      return;
-    }
-
-    const data = await res.json();
-
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("role", data.role);
-    localStorage.setItem("username", data.username);
-
-    // Redirect
-    if(data.role === "ADMIN"){
-      window.location = "/admin-claims.html";
+    if (!res.ok) {
+      showMsg('Invalid username or password. Please try again.', 'error');
     } else {
-      window.location = "/";
+      const data = await res.json();
+      localStorage.setItem('token',    data.token);
+      localStorage.setItem('role',     data.role);
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('fullName', data.fullName || data.username);
+      window.location = data.role === 'ADMIN' ? '/admin-claims.html' : '/index.html';
     }
-
-  } catch(err){
-    alert("Server error. Try again.");
+  } catch {
+    showMsg('Server error. Please try again.', 'error');
   }
-});
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+}
 
-/* =====================
-   REGISTER API
-===================== */
-document.getElementById("registerForm").addEventListener("submit", async (e)=>{
+async function doRegister(e) {
   e.preventDefault();
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
 
-  const fullName = document.getElementById("rname").value;
-  const username = document.getElementById("rusername").value;
-  const email = document.getElementById("remail").value;
-  const password = document.getElementById("rpassword").value;
+  const fullName = document.getElementById('rName').value;
+  const username = document.getElementById('rUsername').value;
+  const email    = document.getElementById('rEmail').value;
+  const password = document.getElementById('rPassword').value;
 
   try {
-    const res = await fetch("/api/auth/register",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json"},
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fullName, username, email, password })
     });
 
-    if(res.ok){
-      alert("Account Created Successfully! Please Login.");
-      showLogin();
+    if (res.ok) {
+      showMsg('Account created successfully! Please sign in.', 'success');
+      document.getElementById('registerForm').reset();
+      setTimeout(showLogin, 1200);
     } else {
       const text = await res.text();
-      alert(text || "Registration Failed");
+      const msgs = {
+        'username.exists': 'This username is already taken.',
+        'email.exists':    'This email is already registered.'
+      };
+      showMsg(msgs[text] || text || 'Registration failed', 'error');
     }
-
-  } catch(err){
-    alert("Server error. Try again.");
+  } catch {
+    showMsg('Server error. Please try again.', 'error');
   }
-});
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+}
 
+// If already logged in, redirect
+if (localStorage.getItem('token')) window.location = '/index.html';
 </script>
-
 </body>
 </html>

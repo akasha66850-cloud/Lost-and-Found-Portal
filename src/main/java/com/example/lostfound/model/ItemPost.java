@@ -17,29 +17,40 @@ public class ItemPost {
 
     private String title;
 
-    @Column(columnDefinition="TEXT")
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     private String location;
 
-    private String mobile;  
+    private String mobile;
 
     private LocalDate dateEvent;
 
     private String category;
 
+    /** Colour of the item e.g. "Black", "Silver" */
+    private String colour;
+
+    /** true = LOST report, false = FOUND report */
     private boolean lost;
 
     @Lob
     @Column(columnDefinition = "LONGBLOB")
     private byte[] photo;
 
+    /**
+     * Status values:
+     *  ACTIVE       – default for new reports
+     *  RETURNED     – lost item returned to owner
+     *  RESOLVED     – found item handed back
+     *  REMOVED      – admin removed
+     */
     @Builder.Default
-    private String status = "UNVERIFIED";     // default status
+    private String status = "ACTIVE";
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     private User reportedBy;
 
     @Builder.Default
-    private Instant createdAt = Instant.now();  // default timestamp
+    private Instant createdAt = Instant.now();
 }

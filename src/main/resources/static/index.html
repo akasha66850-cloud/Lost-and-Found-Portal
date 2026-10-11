@@ -1,163 +1,334 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Lost & Found Portal</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Lost &amp; Found Portal</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="/css/index.css">
+<link rel="stylesheet" href="/css/dashboard.css">
 </head>
-
 <body>
 
-<nav class="navbar navbar-expand-lg custom-navbar">
-<div class="container">
+<div class="app-layout">
+  <!-- Left Dark Sidebar (Mounted by app.js) -->
+  <div id="sidebar-mount"></div>
 
-<a class="navbar-brand fw-bold" >Lost & Found Portal</a>
+  <div class="content-wrapper">
+    <!-- Top Bar with Date & User Avatar (Mounted by app.js) -->
+    <div id="topbar-mount"></div>
 
-<div class="ms-auto d-flex align-items-center gap-2">
+    <!-- Main Content -->
+    <main class="main-content">
 
-  <a href="/" class="btn btn-light btn-sm rounded-pill px-3">
-    <i class="fa fa-home me-1"></i> Home
-  </a>
+      <!-- ── TOP ROW: GLOWING STAT CARDS (EXACT MATCH TO REFERENCE IMAGE) ── -->
+      <div class="stats-grid">
+        <!-- 1. Total Lost Items (Blue Glowing Gradient) -->
+        <div class="stat-card blue">
+          <div class="stat-card-top">
+            <div class="stat-card-label">Total Lost Items</div>
+            <div class="stat-card-icon-badge"><i class="fas fa-arrow-trend-up"></i></div>
+          </div>
+          <div class="stat-card-middle">
+            <div class="stat-card-value" id="statLost">—</div>
+            <div class="stat-card-sub" id="statLostSub">Active missing reports</div>
+          </div>
+          <div class="stat-card-bottom">
+            <div class="stat-mini-pill" title="File a report" onclick="window.location='/report-lost.html'"><i class="fas fa-plus"></i></div>
+            <div class="stat-mini-pill" title="Search all" onclick="window.location='/search.html'"><i class="fas fa-search"></i></div>
+            <div class="stat-mini-pill" title="Refresh" onclick="loadDashboardData()"><i class="fas fa-rotate-right"></i></div>
+          </div>
+        </div>
 
-  <a id="myClaimsBtn" href="/my-claims.html"
-     class="btn btn-warning btn-sm rounded-pill px-3 d-none">
-    <i class="fa fa-list me-1"></i> My Claims
-  </a>
+        <!-- 2. Found Items (Emerald Green Glowing Gradient) -->
+        <div class="stat-card green">
+          <div class="stat-card-top">
+            <div class="stat-card-label">Found Items</div>
+            <div class="stat-card-icon-badge"><i class="fas fa-hand-holding-heart"></i></div>
+          </div>
+          <div class="stat-card-middle">
+            <div class="stat-card-value" id="statFound">—</div>
+            <div class="stat-card-sub">Items awaiting claimants</div>
+          </div>
+          <div class="stat-card-bottom">
+            <div class="stat-mini-pill" title="Submit found" onclick="window.location='/report-found.html'"><i class="fas fa-plus"></i></div>
+            <div class="stat-mini-pill" title="Browse found" onclick="window.location='/search.html'"><i class="fas fa-box-open"></i></div>
+            <div class="stat-mini-pill" title="Refresh" onclick="loadDashboardData()"><i class="fas fa-rotate-right"></i></div>
+          </div>
+        </div>
 
-  <span class="badge bg-light text-dark rounded-pill px-3 py-2">
-    <i class="fa fa-user-circle me-1"></i>
-    <span id="user">Guest</span>
-  </span>
+        <!-- 3. Returned Items (Crimson / Coral Red Glowing Gradient) -->
+        <div class="stat-card red">
+          <div class="stat-card-top">
+            <div class="stat-card-label">Returned Items</div>
+            <div class="stat-card-icon-badge"><i class="fas fa-circle-check"></i></div>
+          </div>
+          <div class="stat-card-middle">
+            <div class="stat-card-value" id="statMatched">—</div>
+            <div class="stat-card-sub">Successfully handed over</div>
+          </div>
+          <div class="stat-card-bottom">
+            <div class="stat-mini-pill" title="My claims" onclick="window.location='/my-claims.html'"><i class="fas fa-list-check"></i></div>
+            <div class="stat-mini-pill" title="History" onclick="window.location='/my-reports.html'"><i class="fas fa-clock-rotate-left"></i></div>
+            <div class="stat-mini-pill" title="Refresh" onclick="loadDashboardData()"><i class="fas fa-rotate-right"></i></div>
+          </div>
+        </div>
 
-  <button id="logoutBtn" onclick="logout()"
-          class="btn btn-danger btn-sm rounded-pill px-3 d-none">
-    <i class="fa fa-sign-out-alt me-1"></i> Logout
-  </button>
+        <!-- 4. Pending Claims (Amber / Orange Glowing Gradient) -->
+        <div class="stat-card orange">
+          <div class="stat-card-top">
+            <div class="stat-card-label">Pending Claims</div>
+            <div class="stat-card-icon-badge"><i class="fas fa-hourglass-half"></i></div>
+          </div>
+          <div class="stat-card-middle">
+            <div class="stat-card-value" id="statPending">—</div>
+            <div class="stat-card-sub">Awaiting verification</div>
+          </div>
+          <div class="stat-card-bottom">
+            <div class="stat-mini-pill" title="Check claims" onclick="window.location='/my-claims.html'"><i class="fas fa-eye"></i></div>
+            <div class="stat-mini-pill" title="Notifications" onclick="window.location='/notifications.html'"><i class="fas fa-bell"></i></div>
+            <div class="stat-mini-pill" title="Refresh" onclick="loadDashboardData()"><i class="fas fa-rotate-right"></i></div>
+          </div>
+        </div>
+      </div>
 
-  <a id="adminBtn" href="/admin-claims.html"
-     class="btn btn-dark btn-sm rounded-pill px-3 d-none">
-    <i class="fa fa-user-shield me-1"></i> Admin Panel
-  </a>
+      <!-- ── BOTTOM SPLIT: RECENT REPORTS TABLE + CATEGORY OVERVIEW ── -->
+      <div class="content-grid">
 
-</div>
-</div>
-</nav>
+        <!-- Left Card: Recent Reports (Styled like Recent Transactions in Image) -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Reports</span>
+            <div style="display:flex;gap:10px">
+              <a href="/search.html" class="btn btn-outline btn-sm">View All</a>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Item Description</th>
+                    <th>Category</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="recentTableBody">
+                  <tr>
+                    <td colspan="5" class="text-center p-4" style="color:var(--text-muted)">
+                      <i class="fas fa-spinner fa-spin me-2"></i> Loading recent activity...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
-<div class="container mt-4">
+        <!-- Right Card: Category Breakdown (Styled like Budget Overview with Neon Bars) -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Category Overview</span>
+          </div>
+          <div class="card-body">
+            <div id="categoryOverviewList">
+              <!-- Neon Progress Bar Item 1: Electronics -->
+              <div class="progress-item">
+                <div class="progress-item-top">
+                  <span class="progress-item-title">Electronics</span>
+                  <span class="progress-item-meta" id="progValElectronics">Loading...</span>
+                </div>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill orange" id="progBarElectronics" style="width: 75%"></div>
+                </div>
+                <div class="progress-percentage">Laptops, Phones, Smartwatches</div>
+              </div>
 
-<div class="row mb-3">
-  <div class="col-md-6">
-    <a href="/post.html" class="btn btn-success w-100">
-      <i class="fa fa-plus"></i> Post Found Item
-    </a>
+              <!-- Neon Progress Bar Item 2: Bag & Wallet -->
+              <div class="progress-item">
+                <div class="progress-item-top">
+                  <span class="progress-item-title">Bags &amp; Wallets</span>
+                  <span class="progress-item-meta" id="progValBags">Loading...</span>
+                </div>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill green" id="progBarBags" style="width: 50%"></div>
+                </div>
+                <div class="progress-percentage">Backpacks, Pouches, Purses</div>
+              </div>
+
+              <!-- Neon Progress Bar Item 3: Documents & Cards -->
+              <div class="progress-item">
+                <div class="progress-item-top">
+                  <span class="progress-item-title">Documents &amp; Cards</span>
+                  <span class="progress-item-meta" id="progValDocs">Loading...</span>
+                </div>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill red" id="progBarDocs" style="width: 35%"></div>
+                </div>
+                <div class="progress-percentage">ID Cards, Records, Certificates</div>
+              </div>
+
+              <!-- Neon Progress Bar Item 4: Other / Keys -->
+              <div class="progress-item" style="margin-bottom:0">
+                <div class="progress-item-top">
+                  <span class="progress-item-title">Keys &amp; Accessories</span>
+                  <span class="progress-item-meta" id="progValOther">Loading...</span>
+                </div>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill blue" id="progBarOther" style="width: 60%"></div>
+                </div>
+                <div class="progress-percentage">Bike Keys, Water Bottles, Specs</div>
+              </div>
+            </div>
+
+            <!-- Quick Action Shortcut Buttons -->
+            <div style="display:flex;gap:12px;margin-top:28px">
+              <button class="btn btn-primary w-100" onclick="window.location='/report-lost.html'">
+                <i class="fas fa-plus-circle me-1"></i> Report Lost
+              </button>
+              <button class="btn btn-success w-100" onclick="window.location='/report-found.html'">
+                <i class="fas fa-hand-holding me-1"></i> Report Found
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
   </div>
-
-  <div class="col-md-6">
-    <button onclick="reportLost()" class="btn btn-danger w-100">
-      <i class="fa fa-exclamation-triangle"></i> Report Lost Item
-    </button>
-  </div>
 </div>
 
-<div class="row" id="items"></div>
-</div>
-
+<script src="/js/app.js"></script>
 <script>
+(async () => {
+    await initPage({ activePage: 'dashboard', pageTitle: 'Dashboard', requireAuth: false });
+    loadDashboardData();
+})();
 
-/* =====================
-   USER / ROLE HANDLING
-   ===================== */
-window.onload = ()=>{
- let u = localStorage.getItem("username");
- let role = localStorage.getItem("role");
-
- if(u){
-   document.getElementById("user").innerText = u;
-   document.getElementById("logoutBtn").classList.remove("d-none");
-   document.getElementById("myClaimsBtn").classList.remove("d-none");
-
-   if(role === "ADMIN"){
-     document.getElementById("adminBtn").classList.remove("d-none");
-   }
- }
-};
-
-/* =====================
-   LOAD ITEMS (PUBLIC)
-   ===================== */
-async function load(){
- let res = await fetch("/api/items");
- let data = await res.json();
- let html="";
-
- data.forEach(i=>{
- html+=`
- <div class="col-md-4 mb-3">
-  <div class="card shadow-sm">
-
-    ${i.photo ? `<img src="/api/items/photo/${i.id}" height="200" class="card-img-top">` : ""}
-
-    <div class="card-body">
-      <h5>${i.title}</h5>
-
-      <span class="badge bg-${i.lost ? 'danger' : 'success'}">
-        ${i.lost ? 'LOST' : 'FOUND'}
-      </span>
-
-      <p class="mt-2">${i.location ?? ''}</p>
-      <p><b>Date:</b> ${i.dateEvent}</p>
-      <p>Status: <b>${i.status}</b></p>
-
-      <a href="/item.html?id=${i.id}"
-         class="btn btn-outline-primary w-100 mb-2">
-        View Details
-      </a>
-
-      ${
-        !i.lost
-        ? (
-            localStorage.getItem("token")
-            ? `<a href="/item.html?id=${i.id}"
-                class="btn btn-warning w-100">Claim</a>`
-            : `<a href="/login.html"
-                class="btn btn-outline-warning w-100">
-                Login to Claim
-              </a>`
-          )
-        : `<small class="text-muted">Waiting for finder...</small>`
-      }
-
-    </div>
-  </div>
- </div>`;
- });
-
- document.getElementById("items").innerHTML = html;
+async function loadDashboardData() {
+    loadSummaryStats();
+    loadRecentItems();
+    loadCategoryStats();
 }
 
-/* =====================
-   REPORT LOST ITEM
-   ===================== */
-function reportLost(){
- if(!localStorage.getItem("token")){
-   alert("Login required to report lost item");
-   window.location="/login.html";
- } else {
-   window.location="/post.html?lost=true";
- }
+async function loadSummaryStats() {
+    try {
+        const res = await fetch('/api/dashboard/summary');
+        if (!res.ok) throw new Error();
+        const d = await res.json();
+        document.getElementById('statLost').textContent    = d.totalLost ?? 0;
+        document.getElementById('statFound').textContent   = d.totalFound ?? 0;
+        document.getElementById('statMatched').textContent = d.matched ?? 0;
+        document.getElementById('statPending').textContent = d.pending ?? 0;
+    } catch {
+        ['statLost','statFound','statMatched','statPending'].forEach(id => {
+            document.getElementById(id).textContent = '0';
+        });
+    }
 }
 
-/* =====================
-   LOGOUT
-   ===================== */
-function logout(){
- localStorage.clear();
- window.location="/login.html";
+async function loadRecentItems() {
+    const tbody = document.getElementById('recentTableBody');
+    try {
+        const res = await fetch('/api/dashboard/recent');
+        if (!res.ok) throw new Error();
+        const items = await res.json();
+
+        if (!items || !items.length) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="5" class="text-center p-5 text-muted">
+                  <i class="fas fa-inbox mb-2" style="font-size:32px;display:block"></i>
+                  No reports logged yet.
+                </td>
+              </tr>`;
+            return;
+        }
+
+        // Icon mapping based on category/title like the circular logo in the reference picture
+        const iconMap = {
+            'Electronics': { icon: 'mobile-screen-button', color: '#60a5fa' },
+            'Bag / Wallet': { icon: 'wallet', color: '#4ade80' },
+            'Books / Documents': { icon: 'book', color: '#f87171' },
+            'Keys': { icon: 'key', color: '#fbbf24' },
+            'Clothing': { icon: 'shirt', color: '#c084fc' }
+        };
+
+        tbody.innerHTML = items.slice(0, 6).map(i => {
+            const dateStr = i.dateEvent ? formatShortDate(i.dateEvent) : 'Recent';
+            const catIcon = iconMap[i.category] || { icon: 'tag', color: '#94a3b8' };
+
+            return `
+            <tr style="cursor:pointer" onclick="window.location='/item.html?id=${i.id}'">
+              <td style="color:var(--text-secondary);font-size:14px;white-space:nowrap">${dateStr}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div class="item-circle-icon">
+                    <i class="fas fa-${catIcon.icon}" style="color:${catIcon.color}"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight:700;color:#fff">${escHtml(i.title)}</div>
+                    <small style="color:var(--text-muted);font-size:12px">${i.lost ? 'Lost Item Report' : 'Found Item Report'}</small>
+                  </div>
+                </div>
+              </td>
+              <td><span style="color:var(--text-secondary)">${escHtml(i.category || 'General')}</span></td>
+              <td style="color:var(--text-secondary);font-size:14px">${escHtml(i.location || 'Campus')}</td>
+              <td>${statusBadge(i.status)}</td>
+            </tr>
+            `;
+        }).join('');
+    } catch {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-danger">Failed to load reports</td></tr>`;
+    }
 }
 
-load();
+async function loadCategoryStats() {
+    try {
+        const res = await fetch('/api/items?size=100');
+        if (!res.ok) return;
+        const items = await res.json();
+        
+        let elec = 0, bags = 0, docs = 0, other = 0;
+        const total = items.length || 1;
+
+        items.forEach(it => {
+            const cat = (it.category || '').toLowerCase();
+            if (cat.includes('elect')) elec++;
+            else if (cat.includes('bag') || cat.includes('wallet')) bags++;
+            else if (cat.includes('book') || cat.includes('doc')) docs++;
+            else other++;
+        });
+
+        document.getElementById('progValElectronics').textContent = `${elec} Items (${Math.round((elec/total)*100)}%)`;
+        document.getElementById('progBarElectronics').style.width = `${Math.max(15, Math.round((elec/total)*100))}%`;
+
+        document.getElementById('progValBags').textContent = `${bags} Items (${Math.round((bags/total)*100)}%)`;
+        document.getElementById('progBarBags').style.width = `${Math.max(15, Math.round((bags/total)*100))}%`;
+
+        document.getElementById('progValDocs').textContent = `${docs} Items (${Math.round((docs/total)*100)}%)`;
+        document.getElementById('progBarDocs').style.width = `${Math.max(15, Math.round((docs/total)*100))}%`;
+
+        document.getElementById('progValOther').textContent = `${other} Items (${Math.round((other/total)*100)}%)`;
+        document.getElementById('progBarOther').style.width = `${Math.max(15, Math.round((other/total)*100))}%`;
+    } catch { /* ignore */ }
+}
+
+function formatShortDate(dateStr) {
+    try {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch {
+        return dateStr;
+    }
+}
+
+function escHtml(s) {
+    return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 </script>
-
 </body>
 </html>
