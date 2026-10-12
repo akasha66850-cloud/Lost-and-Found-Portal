@@ -27,30 +27,30 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        String token = null;
         String header = request.getHeader("Authorization");
 
         if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
+            token = header.substring(7);
+        } else if (StringUtils.hasText(request.getParameter("token"))) {
+            token = request.getParameter("token");
+        }
 
-            String token = header.substring(7);
+        if (token != null && jwtUtil.validateToken(token)) {
+            String username = jwtUtil.getUsername(token);
+            String role = jwtUtil.getRole(token);
 
-            if (jwtUtil.validateToken(token)) {
+            SimpleGrantedAuthority authority =
+                    new SimpleGrantedAuthority("ROLE_" + role);
 
-                String username = jwtUtil.getUsername(token);
-                String role = jwtUtil.getRole(token);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            username,
+                            null,
+                            List.of(authority)
+                    );
 
-                // 🔥 ADD ROLE_ PREFIX
-               SimpleGrantedAuthority authority =
-        new SimpleGrantedAuthority("ROLE_" + role);
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                List.of(authority)
-                        );
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);

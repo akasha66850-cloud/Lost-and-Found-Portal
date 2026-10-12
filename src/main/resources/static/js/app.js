@@ -27,19 +27,19 @@ function logout() {
     window.location = '/login.html';
 }
 
-// ── Sidebar Builder (Matching Image) ──────────────────────────
+// ── Sidebar Builder (Matching Expanse UI Image) ───────────────
 function buildSidebar(activePage) {
     const role = getRole();
     const isAdmin = role === 'ADMIN';
 
     const items = [
-        { id: 'dashboard',     icon: 'fa-chart-pie',         label: 'Dashboard',       href: '/index.html' },
-        { id: 'report-lost',   icon: 'fa-exclamation-circle', label: 'Report Lost',     href: '/report-lost.html' },
-        { id: 'report-found',  icon: 'fa-hand-holding-heart',label: 'Report Found',    href: '/report-found.html' },
-        { id: 'search',        icon: 'fa-magnifying-glass',  label: 'Search Items',    href: '/search.html' },
-        { id: 'my-reports',    icon: 'fa-file-lines',        label: 'My Reports',      href: '/my-reports.html' },
-        { id: 'my-claims',     icon: 'fa-list-check',        label: 'My Claims',       href: '/my-claims.html' },
-        { id: 'notifications', icon: 'fa-bell',              label: 'Notifications',   href: '/notifications.html', badgeId: 'sidebarNotifBadge' },
+        { id: 'dashboard',     icon: 'fa-table-cells-large',   label: 'Dashboard',   href: '/index.html' },
+        { id: 'accounts',      icon: 'fa-wallet',              label: 'Accounts',    href: '/report-lost.html' },
+        { id: 'payments',      icon: 'fa-arrow-right-arrow-left', label: 'Payments', href: '/report-found.html' },
+        { id: 'budgets',       icon: 'fa-chart-pie',           label: 'Budgets',     href: '/search.html' },
+        { id: 'investing',     icon: 'fa-chart-line',          label: 'Investing',   href: '/my-reports.html' },
+        { id: 'my-claims',     icon: 'fa-list-check',          label: 'My Claims',   href: '/my-claims.html' },
+        { id: 'notifications', icon: 'fa-bell',                label: 'Notifications', href: '/notifications.html', badgeId: 'sidebarNotifBadge' },
     ];
 
     if (isAdmin) {
@@ -62,8 +62,8 @@ function buildSidebar(activePage) {
     return `
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="brand-logo-glow"><i class="fas fa-cube"></i></div>
-            <div class="brand-title">Lost &amp; Found</div>
+            <div class="brand-swirl-icon"><i class="fas fa-certificate"></i></div>
+            <div class="brand-title">Expanse</div>
         </div>
 
         <nav class="sidebar-menu">
@@ -71,13 +71,21 @@ function buildSidebar(activePage) {
         </nav>
 
         <div class="sidebar-bottom">
+            <a href="/my-reports.html" class="nav-link-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="/my-reports.html" class="nav-link-item">
+                <i class="fas fa-gear"></i>
+                <span>Settings</span>
+            </a>
             <div class="developer-card-badge">
                 <div class="dev-sub"><i class="fas fa-code me-1"></i> Developed by</div>
                 <div class="dev-name">AKASH P</div>
                 <div class="dev-dept">III CSE A (PSG ITECH)</div>
             </div>
             <a href="javascript:void(0)" onclick="logout()" class="nav-link-item" style="color:#f87171">
-                <i class="fas fa-arrow-right-from-bracket" style="color:#f87171"></i>
+                <i class="fas fa-power-off" style="color:#f87171"></i>
                 <span>Logout</span>
             </a>
         </div>
@@ -85,13 +93,14 @@ function buildSidebar(activePage) {
     `;
 }
 
-// ── Top Header Builder (Matching Image) ───────────────────────
+// ── Top Header Builder (Matching Expanse Header) ──────────────
 function buildTopbar(pageTitle) {
     const today = new Date().toLocaleDateString('en-US', {
-        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+        weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
     });
-    const name = getFullName();
-    const initial = name.charAt(0).toUpperCase();
+    const rawName = getFullName();
+    const displayName = rawName ? rawName.toUpperCase() : 'ALEX R.';
+    const initial = displayName.charAt(0);
 
     return `
     <header class="topbar">
@@ -100,7 +109,7 @@ function buildTopbar(pageTitle) {
             <div class="topbar-date">${today}</div>
             <div class="user-profile-chip" onclick="window.location='/my-reports.html'" title="View profile">
                 <div class="user-avatar-circle">${initial}</div>
-                <span class="user-chip-name">${name}</span>
+                <span class="user-chip-name">${displayName}</span>
                 <i class="fas fa-chevron-down" style="font-size:11px;color:#94a3b8"></i>
             </div>
             <button class="btn-header-logout" onclick="logout()" title="Sign out">

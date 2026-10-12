@@ -1130,8 +1130,8 @@ async function openEvidenceModal(claimId) {
 
   // Image URLs
   const token = getToken();
-  document.getElementById('evidenceGovImg').src = `/api/claims/proof/gov/${claim.id}?t=${Date.now()}`;
-  document.getElementById('evidenceProductImg').src = `/api/claims/proof/product/${claim.id}?t=${Date.now()}`;
+  document.getElementById('evidenceGovImg').src = `/api/claims/proof/gov/${claim.id}?token=${encodeURIComponent(token)}`;
+  document.getElementById('evidenceProductImg').src = `/api/claims/proof/product/${claim.id}?token=${encodeURIComponent(token)}`;
 
   // Modal actions based on status
   const actionDiv = document.getElementById('evidenceModalActions');

@@ -74,6 +74,15 @@ public class ClaimController {
         return ResponseEntity.ok(claimRepo.findByClaimant(user));
     }
 
+    // ── FINDER: Incoming Claims on items reported by current user ───
+    @GetMapping("/incoming")
+    public ResponseEntity<?> getIncomingClaims(Authentication auth) {
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
+        var user = userRepo.findByUsername(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(claimRepo.findIncomingClaimsForFinder(user));
+    }
+
     // ── ADMIN: List Pending Claims ────────────────────────────
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/pending")
@@ -88,53 +97,58 @@ public class ClaimController {
         return ResponseEntity.ok(claimRepo.findAll());
     }
 
-    // ── ADMIN: Approve ────────────────────────────────────────
-    @PreAuthorize("hasRole('ADMIN')")
+    // ── ADMIN OR FINDER: Approve ──────────────────────────────
     @PatchMapping("/{id}/approve")
     public ResponseEntity<?> approveClaim(@PathVariable Long id, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
         try {
             Claim claim = claimService.approveClaim(id, auth.getName());
             return ResponseEntity.ok(Map.of("msg", "Claim approved", "status", claim.getStatus()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error approving claim");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error approving claim: " + e.getMessage());
         }
     }
 
-    // ── ADMIN: Reject ─────────────────────────────────────────
-    @PreAuthorize("hasRole('ADMIN')")
+    // ── ADMIN OR FINDER: Reject ───────────────────────────────
     @PatchMapping("/{id}/reject")
     public ResponseEntity<?> rejectClaim(@PathVariable Long id,
                                           @RequestParam(required = false, defaultValue = "") String notes,
                                           Authentication auth) {
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
         try {
             Claim claim = claimService.rejectClaim(id, auth.getName(), notes);
             return ResponseEntity.ok(Map.of("msg", "Claim rejected", "status", claim.getStatus()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error rejecting claim");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error rejecting claim: " + e.getMessage());
         }
     }
 
-    // ── ADMIN: Confirm Return ─────────────────────────────────
-    @PreAuthorize("hasRole('ADMIN')")
+    // ── ADMIN OR FINDER: Confirm Return ───────────────────────
     @PostMapping("/{id}/confirm-return")
     public ResponseEntity<?> confirmReturn(@PathVariable Long id, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
         try {
             Claim claim = claimService.confirmReturn(id, auth.getName());
             return ResponseEntity.ok(Map.of("msg", "Item marked as returned. Notifications sent.", "status", claim.getStatus()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error confirming return");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error confirming return: " + e.getMessage());
         }
     }
 
-    // ── ADMIN: Legacy resolve endpoint (kept for compatibility) ─
-    @PreAuthorize("hasRole('ADMIN')")
+    // ── ADMIN OR FINDER: Legacy resolve endpoint ──────────────
     @PostMapping("/{id}/resolve")
     public ResponseEntity<?> resolveClaim(@PathVariable Long id,
                                            @RequestParam String status,
@@ -147,19 +161,39 @@ public class ClaimController {
         return ResponseEntity.badRequest().body("Invalid status. Use approve or reject endpoints.");
     }
 
-    // ── ADMIN: Gov Proof Image ────────────────────────────────
-    @PreAuthorize("hasRole('ADMIN')")
+    // ── ADMIN, FINDER, OR CLAIMANT: Gov Proof Image ───────────
     @GetMapping("/proof/gov/{id}")
-    public ResponseEntity<byte[]> viewGovProof(@PathVariable Long id) throws Exception {
+    public ResponseEntity<byte[]> viewGovProof(@PathVariable Long id, Authentication auth) throws Exception {
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        var user = userRepo.findByUsername(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
         var claim = claimRepo.findById(id).orElseThrow();
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getRole());
+        boolean isClaimant = claim.getClaimant() != null && claim.getClaimant().getId().equals(user.getId());
+        boolean isFinder = claim.getItemPost() != null &&
+                claim.getItemPost().getReportedBy() != null &&
+                claim.getItemPost().getReportedBy().getId().equals(user.getId());
+        if (!isAdmin && !isClaimant && !isFinder) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return buildImageResponse(claim.getGovProofImage());
     }
 
-    // ── ADMIN: Product Proof Image ────────────────────────────
-    @PreAuthorize("hasRole('ADMIN')")
+    // ── ADMIN, FINDER, OR CLAIMANT: Product Proof Image ───────
     @GetMapping("/proof/product/{id}")
-    public ResponseEntity<byte[]> viewProductProof(@PathVariable Long id) throws Exception {
+    public ResponseEntity<byte[]> viewProductProof(@PathVariable Long id, Authentication auth) throws Exception {
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        var user = userRepo.findByUsername(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
         var claim = claimRepo.findById(id).orElseThrow();
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getRole());
+        boolean isClaimant = claim.getClaimant() != null && claim.getClaimant().getId().equals(user.getId());
+        boolean isFinder = claim.getItemPost() != null &&
+                claim.getItemPost().getReportedBy() != null &&
+                claim.getItemPost().getReportedBy().getId().equals(user.getId());
+        if (!isAdmin && !isClaimant && !isFinder) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return buildImageResponse(claim.getProductProofImage());
     }
 

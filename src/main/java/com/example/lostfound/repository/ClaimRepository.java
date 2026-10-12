@@ -21,4 +21,7 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
     long countByStatus(String status);
 
     boolean existsByClaimantAndItemPostAndStatusNotIn(User claimant, ItemPost itemPost, List<String> statuses);
+
+    @org.springframework.data.jpa.repository.Query("SELECT c FROM Claim c WHERE c.itemPost.reportedBy = :finder ORDER BY c.createdAt DESC")
+    List<Claim> findIncomingClaimsForFinder(@org.springframework.data.repository.query.Param("finder") User finder);
 }

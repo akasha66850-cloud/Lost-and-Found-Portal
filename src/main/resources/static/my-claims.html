@@ -61,8 +61,8 @@ function renderClaims(claims) {
   }
 
   const statusInfo = {
-    'PENDING_VERIFICATION':       { icon: 'hourglass-half', msg: 'Your claim is under admin review.' },
-    'APPROVED_AWAITING_HANDOVER': { icon: 'check-circle',   msg: 'Approved! Please visit the Lost & Found desk to collect your item.' },
+    'PENDING_VERIFICATION':       { icon: 'hourglass-half', msg: 'Your claim is under review by the item finder or admin.' },
+    'APPROVED_AWAITING_HANDOVER': { icon: 'check-circle',   msg: 'Approved! Coordinate handover with the finder or visit the Lost & Found desk.' },
     'REJECTED':                   { icon: 'times-circle',   msg: 'Your claim was not approved. See review notes below.' },
     'COMPLETED':                  { icon: 'check-double',   msg: 'Item has been returned to you. Thank you!' },
   };
@@ -103,14 +103,14 @@ function renderClaims(claims) {
 
         ${c.reviewNotes ? `
         <div style="background:var(--body-bg);border-radius:8px;padding:12px;font-size:13px">
-          <b><i class="fas fa-comment-alt me-1"></i>Admin Notes:</b> ${escHtml(c.reviewNotes)}
+          <b><i class="fas fa-comment-alt me-1"></i>Review Notes:</b> ${escHtml(c.reviewNotes)}
         </div>` : ''}
 
         <div style="margin-top:12px">
           <a href="/item.html?id=${c.itemPost?.id}" class="btn btn-outline btn-sm">View Item</a>
           ${c.status==='APPROVED_AWAITING_HANDOVER' ? `
           <span style="margin-left:12px;font-size:13px;color:#16a34a;font-weight:600">
-            <i class="fas fa-info-circle"></i> Please bring your ID and visit the Lost & Found desk to collect your item.
+            <i class="fas fa-info-circle"></i> Claim approved! Please contact the finder to collect your item.
           </span>` : ''}
         </div>
       </div>

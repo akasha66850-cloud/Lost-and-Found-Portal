@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.Font?>
+
+<StackPane fx:id="rootPane" stylesheets="@../css/login.css" styleClass="root-pane"
+           xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.campus.lostfound.client.controller.LoginController">
+
+    <VBox alignment="CENTER" spacing="0" maxWidth="610" prefWidth="610" styleClass="login-column">
+
+        <!-- Top Avatar with White Horizontal Line Across -->
+        <StackPane prefHeight="130" maxHeight="130" minHeight="130">
+            <!-- 2px White Line Across the 610px width -->
+            <Line startX="-300" endX="300" styleClass="avatar-line" />
+
+            <!-- 130px Diameter Circle with Purple Outline -->
+            <Circle radius="65" styleClass="avatar-circle" />
+
+            <!-- User Icon SVG inside Avatar Circle -->
+            <SVGPath content="M 0,-16 A 14,14 0 1 1 0,12 A 14,14 0 1 1 0,-16 M -24,34 C -24,18 24,18 24,34 Z"
+                     fill="#8E92BC" scaleX="1.2" scaleY="1.2" />
+        </StackPane>
+
+        <!-- White Login Card -->
+        <VBox spacing="20" styleClass="card-pane">
+            <VBox.margin>
+                <Insets top="15" />
+            </VBox.margin>
+
+            <!-- Header Labels -->
+            <VBox alignment="CENTER" spacing="4">
+                <Label text="CAMPUS LOST &amp; FOUND" textFill="#00274F">
+                    <font>
+                        <Font name="Segoe UI Bold" size="20.0" />
+                    </font>
+                </Label>
+                <Label text="Secure Portal Authentication" textFill="#777777">
+                    <font>
+                        <Font size="13.0" />
+                    </font>
+                </Label>
+            </VBox>
+
+            <!-- Error Notification Banner -->
+            <Label fx:id="lblError" textFill="#D93025" wrapText="true" visible="false" managed="false"
+                   style="-fx-background-color: #FDEDED; -fx-padding: 8 12; -fx-background-radius: 4; -fx-font-size: 13px;" />
+
+            <!-- Identifier Input Box with User SVG -->
+            <HBox spacing="10" styleClass="input-box">
+                <SVGPath content="M 12 12 A 4 4 0 1 0 12 4 A 4 4 0 0 0 12 12 M 4 20 C 4 16 8 15 12 15 C 16 15 20 16 20 20 Z"
+                         fill="#888888" scaleX="0.9" scaleY="0.9" />
+                <TextField fx:id="txtIdentifier" promptText="Email or Roll Number (e.g. 21CS001)"
+                           styleClass="input-field" HBox.hgrow="ALWAYS" />
+            </HBox>
+
+            <!-- Password Input Box with Lock SVG -->
+            <HBox spacing="10" styleClass="input-box">
+                <SVGPath content="M 17 8 L 16 8 L 16 6 A 4 4 0 0 0 8 6 L 8 8 L 7 8 A 2 2 0 0 0 5 10 L 5 19 A 2 2 0 0 0 7 21 L 17 21 A 2 2 0 0 0 19 19 L 19 10 A 2 2 0 0 0 17 8 M 10 6 A 2 2 0 0 1 14 6 L 14 8 L 10 8 Z"
+                         fill="#888888" scaleX="0.9" scaleY="0.9" />
+                <PasswordField fx:id="txtPassword" promptText="Password"
+                               styleClass="input-field" HBox.hgrow="ALWAYS" onAction="#handleLogin" />
+            </HBox>
+
+            <!-- Options: Remember Me & Forgot Password -->
+            <HBox alignment="CENTER_LEFT">
+                <CheckBox fx:id="chkRememberMe" text="Remember Me" styleClass="remember-me" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Hyperlink fx:id="linkForgotPassword" text="Forgot Password?" styleClass="forgot-password"
+                           onAction="#handleForgotPassword" />
+            </HBox>
+
+            <!-- Navy Full-Width LOGIN Button -->
+            <Button fx:id="btnLogin" text="LOGIN" maxWidth="Infinity" styleClass="btn-login"
+                    onAction="#handleLogin" />
+
+            <!-- Quick Auto-Fill Demo Accounts -->
+            <VBox spacing="8" alignment="CENTER" style="-fx-padding: 10 0 0 0; -fx-border-color: #EEEEEE; -fx-border-width: 1 0 0 0;">
+                <Label text="Quick Demo Sign-In:" textFill="#888888">
+                    <font>
+                        <Font size="11.0" />
+                    </font>
+                </Label>
+                <HBox spacing="10" alignment="CENTER">
+                    <Button text="👨‍💼 Admin" onAction="#handleQuickAdmin" styleClass="btn-quick-fill" />
+                    <Button text="🛡️ Staff" onAction="#handleQuickStaff" styleClass="btn-quick-fill" />
+                    <Button text="🎓 Student" onAction="#handleQuickStudent" styleClass="btn-quick-fill" />
+                </HBox>
+            </VBox>
+
+            <!-- Registration Footer -->
+            <HBox alignment="CENTER" spacing="5">
+                <Label text="New student without an account?" textFill="#666666" />
+                <Hyperlink text="Register Here" styleClass="register-link" onAction="#handleOpenRegister" />
+            </HBox>
+
+        </VBox>
+
+    </VBox>
+
+</StackPane>

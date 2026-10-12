@@ -94,7 +94,7 @@ class ClaimServiceTest {
     }
 
     @Test
-    void approveClaim_success() {
+    void approveClaim_success_byAdmin() {
         Claim claim = buildPendingClaim();
         when(claimRepo.findById(100L)).thenReturn(Optional.of(claim));
         when(userRepo.findByUsername("admin")).thenReturn(Optional.of(admin));
@@ -104,6 +104,31 @@ class ClaimServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("APPROVED_AWAITING_HANDOVER");
         verify(notificationService).createNotification(eq(claimant), contains("approved"), any(), any());
+    }
+
+    @Test
+    void approveClaim_success_byFinder() {
+        Claim claim = buildPendingClaim();
+        when(claimRepo.findById(100L)).thenReturn(Optional.of(claim));
+        when(userRepo.findByUsername("bob")).thenReturn(Optional.of(finder));
+        when(claimRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Claim result = claimService.approveClaim(100L, "bob");
+
+        assertThat(result.getStatus()).isEqualTo("APPROVED_AWAITING_HANDOVER");
+        verify(notificationService).createNotification(eq(claimant), contains("approved"), any(), any());
+    }
+
+    @Test
+    void approveClaim_unauthorizedUser_throws() {
+        Claim claim = buildPendingClaim();
+        User stranger = User.builder().id(99L).username("charlie").role("USER").build();
+        when(claimRepo.findById(100L)).thenReturn(Optional.of(claim));
+        when(userRepo.findByUsername("charlie")).thenReturn(Optional.of(stranger));
+
+        assertThatThrownBy(() -> claimService.approveClaim(100L, "charlie"))
+                .isInstanceOf(SecurityException.class)
+                .hasMessageContaining("Only an Administrator or the student who reported this found item");
     }
 
     @Test
@@ -150,6 +175,24 @@ class ClaimServiceTest {
         assertThat(foundItem.getStatus()).isEqualTo("RESOLVED");
         verify(notificationService).createNotification(eq(claimant), contains("returned to you"), any(), any());
         verify(notificationService).createNotification(eq(finder), contains("returned to its verified owner"), any(), any());
+    }
+
+    @Test
+    void confirmReturn_success_byFinder() {
+        Claim claim = buildPendingClaim();
+        claim.setStatus("APPROVED_AWAITING_HANDOVER");
+
+        when(claimRepo.findById(100L)).thenReturn(Optional.of(claim));
+        when(userRepo.findByUsername("bob")).thenReturn(Optional.of(finder));
+        when(claimRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(itemRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(matchRepo.findByFoundItem(foundItem)).thenReturn(Collections.emptyList());
+
+        Claim result = claimService.confirmReturn(100L, "bob");
+
+        assertThat(result.getStatus()).isEqualTo("COMPLETED");
+        assertThat(foundItem.getStatus()).isEqualTo("RESOLVED");
+        verify(notificationService).createNotification(eq(claimant), contains("returned to you"), any(), any());
     }
 
     @Test

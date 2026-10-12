@@ -58,11 +58,6 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/claims/pending",
                     "/api/claims/all",
-                    "/api/claims/*/resolve",
-                    "/api/claims/*/approve",
-                    "/api/claims/*/reject",
-                    "/api/claims/*/confirm-return",
-                    "/api/claims/proof/**",
                     "/api/admin/**"
                 ).hasRole("ADMIN")
 

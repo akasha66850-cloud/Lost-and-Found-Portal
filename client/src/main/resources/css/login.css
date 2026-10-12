@@ -1,0 +1,109 @@
+.root-pane {
+    -fx-background-color: linear-gradient(to bottom, #CE8DF9, #C6CDA3);
+    -fx-font-family: 'Segoe UI', -apple-system, sans-serif;
+}
+
+.login-column {
+    -fx-max-width: 610px;
+    -fx-pref-width: 610px;
+}
+
+.avatar-circle {
+    -fx-fill: #FFFFFF;
+    -fx-stroke: #CE8DF9;
+    -fx-stroke-width: 3.5px;
+}
+
+.avatar-line {
+    -fx-stroke: #FFFFFF;
+    -fx-stroke-width: 2px;
+}
+
+.card-pane {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 6px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.12), 20, 0, 0, 8);
+    -fx-padding: 35px 45px 35px 45px;
+}
+
+.input-box {
+    -fx-background-color: #E6E6E6;
+    -fx-background-radius: 4px;
+    -fx-pref-height: 48px;
+    -fx-padding: 0 12px;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.input-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 14px;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #888888;
+}
+
+.input-field:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.btn-login {
+    -fx-background-color: #00274F;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-pref-height: 48px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.btn-login:hover {
+    -fx-background-color: #00366D;
+}
+
+.btn-login:pressed {
+    -fx-background-color: #001B37;
+}
+
+.btn-quick-fill {
+    -fx-background-color: #F0F2F5;
+    -fx-text-fill: #00274F;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4px;
+    -fx-padding: 6px 12px;
+    -fx-cursor: hand;
+    -fx-border-color: #D0D4DC;
+    -fx-border-radius: 4px;
+}
+
+.btn-quick-fill:hover {
+    -fx-background-color: #E2E6EC;
+}
+
+.remember-me {
+    -fx-text-fill: #666666;
+    -fx-font-size: 13px;
+}
+
+.forgot-password {
+    -fx-text-fill: #666666;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+}
+
+.forgot-password:hover {
+    -fx-text-fill: #00274F;
+    -fx-underline: true;
+}
+
+.register-link {
+    -fx-text-fill: #00274F;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+}
+
+.register-link:hover {
+    -fx-underline: true;
+}

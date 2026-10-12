@@ -107,26 +107,35 @@ public class ClaimService {
     // =========================================================
     // ADMIN: Approve Claim
     // =========================================================
-    public Claim approveClaim(Long claimId, String adminUsername) {
-        User admin = userRepo.findByUsername(adminUsername)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+    public Claim approveClaim(Long claimId, String username) {
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Claim claim = claimRepo.findById(claimId)
                 .orElseThrow(() -> new RuntimeException("Claim not found"));
+
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getRole());
+        boolean isFinder = claim.getItemPost() != null &&
+                claim.getItemPost().getReportedBy() != null &&
+                claim.getItemPost().getReportedBy().getId().equals(user.getId());
+
+        if (!isAdmin && !isFinder) {
+            throw new SecurityException("Only an Administrator or the student who reported this found item can approve this claim");
+        }
 
         if (!"PENDING_VERIFICATION".equals(claim.getStatus())) {
             throw new IllegalStateException("Only PENDING_VERIFICATION claims can be approved");
         }
 
         claim.setStatus("APPROVED_AWAITING_HANDOVER");
-        claim.setResolvedBy(admin);
+        claim.setResolvedBy(user);
         claim.setResolvedAt(Instant.now());
         Claim saved = claimRepo.save(claim);
 
         notificationService.createNotification(
                 claim.getClaimant(),
                 "Your claim for \"" + claim.getItemPost().getTitle() +
-                        "\" has been approved. Please visit the lost and found desk to collect your item.",
+                        "\" has been approved. Please coordinate handover to collect your item.",
                 "CLAIM_APPROVED",
                 saved.getId()
         );
@@ -135,21 +144,30 @@ public class ClaimService {
     }
 
     // =========================================================
-    // ADMIN: Reject Claim
+    // ADMIN OR FINDER: Reject Claim
     // =========================================================
-    public Claim rejectClaim(Long claimId, String adminUsername, String notes) {
-        User admin = userRepo.findByUsername(adminUsername)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+    public Claim rejectClaim(Long claimId, String username, String notes) {
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Claim claim = claimRepo.findById(claimId)
                 .orElseThrow(() -> new RuntimeException("Claim not found"));
+
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getRole());
+        boolean isFinder = claim.getItemPost() != null &&
+                claim.getItemPost().getReportedBy() != null &&
+                claim.getItemPost().getReportedBy().getId().equals(user.getId());
+
+        if (!isAdmin && !isFinder) {
+            throw new SecurityException("Only an Administrator or the student who reported this found item can reject this claim");
+        }
 
         if (!"PENDING_VERIFICATION".equals(claim.getStatus())) {
             throw new IllegalStateException("Only PENDING_VERIFICATION claims can be rejected");
         }
 
         claim.setStatus("REJECTED");
-        claim.setResolvedBy(admin);
+        claim.setResolvedBy(user);
         claim.setResolvedAt(Instant.now());
         claim.setReviewNotes(notes);
         Claim saved = claimRepo.save(claim);
@@ -174,15 +192,24 @@ public class ClaimService {
     }
 
     // =========================================================
-    // ADMIN: Confirm Physical Handover (Transactional)
+    // ADMIN OR FINDER: Confirm Physical Handover (Transactional)
     // =========================================================
     @Transactional
-    public Claim confirmReturn(Long claimId, String adminUsername) {
-        User admin = userRepo.findByUsername(adminUsername)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+    public Claim confirmReturn(Long claimId, String username) {
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Claim claim = claimRepo.findById(claimId)
                 .orElseThrow(() -> new RuntimeException("Claim not found"));
+
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getRole());
+        boolean isFinder = claim.getItemPost() != null &&
+                claim.getItemPost().getReportedBy() != null &&
+                claim.getItemPost().getReportedBy().getId().equals(user.getId());
+
+        if (!isAdmin && !isFinder) {
+            throw new SecurityException("Only an Administrator or the student who reported this found item can confirm the return");
+        }
 
         if (!"APPROVED_AWAITING_HANDOVER".equals(claim.getStatus())) {
             throw new IllegalStateException(
@@ -192,7 +219,7 @@ public class ClaimService {
 
         // Mark claim completed
         claim.setStatus("COMPLETED");
-        claim.setHandoverConfirmedBy(admin);
+        claim.setHandoverConfirmedBy(user);
         claim.setHandoverConfirmedAt(Instant.now());
 
         // Mark the found item as RESOLVED

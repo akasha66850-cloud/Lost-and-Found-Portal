@@ -22,13 +22,16 @@ public class ItemController {
     private final ItemPostRepository itemRepo;
     private final UserRepository userRepo;
     private final MatchingService matchingService;
+    private final com.example.lostfound.repository.ItemMatchRepository matchRepo;
 
     public ItemController(ItemPostRepository itemRepo,
                           UserRepository userRepo,
-                          MatchingService matchingService) {
+                          MatchingService matchingService,
+                          com.example.lostfound.repository.ItemMatchRepository matchRepo) {
         this.itemRepo = itemRepo;
         this.userRepo = userRepo;
         this.matchingService = matchingService;
+        this.matchRepo = matchRepo;
     }
 
     // ── PUBLIC SEARCH ────────────────────────────────────────
@@ -81,6 +84,20 @@ public class ItemController {
                 auth.getName(), Sort.by(Sort.Direction.DESC, "createdAt"));
         items.forEach(i -> i.setPhoto(null));
         return ResponseEntity.ok(items);
+    }
+
+    // ── AUTHENTICATED: MY MATCHES ─────────────────────────────
+    @GetMapping("/my-matches")
+    public ResponseEntity<?> myMatches(Authentication auth) {
+        if (auth == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
+        User user = userRepo.findByUsername(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<com.example.lostfound.model.ItemMatch> matches = matchRepo.findByUserId(user.getId());
+        matches.forEach(m -> {
+            if (m.getLostItem() != null) m.getLostItem().setPhoto(null);
+            if (m.getFoundItem() != null) m.getFoundItem().setPhoto(null);
+        });
+        return ResponseEntity.ok(matches);
     }
 
     // ── POST LOST / FOUND ITEM ────────────────────────────────

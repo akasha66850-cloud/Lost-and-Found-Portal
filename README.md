@@ -1,243 +1,317 @@
-<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=9,10,16,22,25&height=220&section=header&text=Lost+%26+Found+Portal&fontSize=44&fontColor=fff&animation=twinkling&fontAlignY=35&desc=Futuristic+Dark+Glassmorphism+Campus+Management+System&descAlignY=65&descSize=16"/>
+# Campus Lost & Found Management System
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Spring%20Boot-3.2.0-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"/>
-  <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Theme-Futuristic%20Dark%20Glass-6366f1?style=for-the-badge&logo=css3&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Security-JWT%20%2B%20BCrypt-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Tests-18%2F18%20Passing-10b981?style=for-the-badge&logo=junit5&logoColor=white"/>
-</div>
+A high-performance, enterprise-grade **Campus Lost & Found Management System** built with **100% pure Java 17** (no external AI services, no Python). Featuring a stateless Spring Boot 3.2 backend with Spring Security 6, JJWT 0.12.5, MySQL 8.0 with HikariCP, and a modern JavaFX 17 desktop application styled after dark glassmorphism dashboard aesthetics.
 
 ---
 
-## 📖 Overview
+## 🏛️ System Architecture
 
-The **Lost & Found Portal** is an enterprise-grade, full-stack campus management web application built with **Java Spring Boot**, **MySQL**, and an ultra-modern **Futuristic Dark Glassmorphism Dashboard UI** (inspired by modern fintech & SaaS control panels).
-
-It replaces outdated physical bulletin boards with an automated digital ecosystem featuring:
-- **Glowing Gradient Stat Cards & Neon Category Analytics** on a deep obsidian canvas (`#090a10`).
-- **Rule-Based Automated Item Matching Engine** that scores similarity across 5 dimensions.
-- **Dual-Proof Claim Verification Workflow** (requiring both Government ID and Product Proof).
-- **Atomic Return Confirmation Workflow** (`@Transactional`) updating 4 database entities simultaneously.
-- **8-Feature Admin Control Center** for campus authorities.
-- **Persistent In-App Notification Stream** alerting finders and claimants in real time.
-
----
-
-## 🌌 Modern Visual Experience
-
-The application is styled with a sleek obsidian glass aesthetic:
-- **Left Dark Sidebar**: Deep dark backdrop (`#0e101a`) with glowing violet logo badge, illuminated active tab indicators, and developer credit badge.
-- **Top Row KPI Cards**:
-  - 🔵 **Total Lost Items**: Radiant Royal Blue Gradient (`#3b82f6` $\rightarrow$ `#1d4ed8`) with upward-trend badge.
-  - 🟢 **Found Items**: Radiant Emerald Green Gradient (`#10b981` $\rightarrow$ `#059669`) with hand-holding badge.
-  - 🔴 **Returned Items**: Radiant Coral/Crimson Gradient (`#f43f5e` $\rightarrow$ `#be123c`) with checkmark badge.
-  - 🟡 **Pending Claims**: Radiant Amber/Orange Gradient (`#f59e0b` $\rightarrow$ `#d97706`) with hourglass badge.
-- **Recent Reports Stream**: Dark surface card with circular item icons, category tags, and glowing status capsules (`Active`, `Returned`, `Completed`, `Pending`).
-- **Category Overview**: Futuristic neon progress bars with glowing drop shadows:
-  - 🟠 **Electronics**: Glowing Amber Bar
-  - 🟢 **Bags & Wallets**: Glowing Cyan-Green Bar
-  - 🔴 **Documents & Cards**: Glowing Coral Bar
-  - 🔵 **Keys & Accessories**: Glowing Electric Blue Bar
-
----
-
-## ⚙️ Core Architecture & Workflows
-
-### 1. 🤖 Intelligent Auto-Matching Engine
-Whenever a student reports a lost or found item, Spring Boot's `MatchingService` scans existing opposite reports in the database:
-- **Category Match:** $+30$ points
-- **Title / Keyword Similarity (3+ letter words):** $+25$ points
-- **Colour Match:** $+15$ points
-- **Location Similarity:** $+20$ points
-- **Date Proximity (within 30 days):** $+10$ points
-
-When the cumulative score is **$\ge 50$**, the engine records an `ItemMatch` and dispatches **in-app notifications** to both the finder and the loser.
-
-### 2. 📑 3-Stage Claim & Evidence Verification
-Students claiming a found item must submit:
-1. Claimant Details (Full Name, Age, Mobile Number).
-2. Identification Details (Specific identifying private marks or serial numbers).
-3. **Dual Evidence Upload:**
-   - Government or College ID Proof Image.
-   - Product Ownership Proof Image (bill, box, warranty, or past photo).
-
-**Status Progression:**  
-`PENDING_VERIFICATION` $\longrightarrow$ `APPROVED_AWAITING_HANDOVER` $\longrightarrow$ `COMPLETED` *(or `REJECTED` with review notes)*.
-
-### 3. 🤝 Atomic Physical Return Handover
-When the student visits the desk to collect their item:
-1. Administrator inspects the physical ID against uploaded proof.
-2. Administrator clicks **Confirm Return** in the Return Management portal.
-3. In a single atomic `@Transactional` boundary:
-   - Claim status $\rightarrow$ `COMPLETED`
-   - Found Item status $\rightarrow$ `RESOLVED`
-   - Linked Lost Item status $\rightarrow$ `RETURNED`
-   - ItemMatch status $\rightarrow$ `RESOLVED`
-   - Handover timestamp and confirming Administrator ID are recorded.
-4. Automated notifications are sent to **both students** confirming safe handover.
-
-### 4. 🛡️ 8-Feature Admin Control Center (`/admin-claims.html`)
-- **Dashboard Overview:** KPI stat cards, urgent review alerts, and handover counter.
-- **Pending Verification:** Filtered evidence review stream with side-by-side document modal.
-- **Return Management:** Handover queue for items approved and waiting for desk collection.
-- **All Claims:** Searchable master claims database.
-- **All Items:** Manage all lost and found reports (Active, Returned, Resolved, Removed, or Delete).
-- **Users Management:** Student roster with instant role toggle (Promote to Admin / Demote to User).
-- **Reports & History:** Category distribution analytics and immutable Completed Return Log.
-- **System Notifications:** Global system-wide activity and audit log.
-
----
-
-## 🛠️ Technology Stack
-
-| Layer | Technology | Details |
-|---|---|---|
-| **Backend Framework** | Java Spring Boot 3.2.0 | Java 17, Spring Web, Spring Data JPA |
-| **Security** | Spring Security 6 + JJWT | Stateless JWT token auth, BCrypt password hashing |
-| **Database** | MySQL 8.0 | Hibernate ORM, `ddl-auto=update` |
-| **Frontend** | HTML5, CSS3, Vanilla JS | Bootstrap 5.3, Font Awesome 6.5, Plus Jakarta Sans |
-| **Testing** | JUnit 5 + Mockito 5 | Mockito Subclass MockMaker, H2 test database |
-| **Build Tool** | Apache Maven | Packaging and dependency resolution |
-
----
-
-## 🗄️ Database Architecture
-
-The system utilizes 5 relational tables:
-
-```
-users (id, username, email, password, full_name, role, created_at)
-  │
-  ├──< item_posts (id, title, category, colour, description, location, date_event, lost, photo, status, reported_by_id)
-  │        │
-  │        ├──< item_matches (id, lost_item_id, found_item_id, score, status, created_at)
-  │        │
-  │        └──< claims (id, item_id, user_id, full_name, age, mobile, proof_type, reason,
-  │                     gov_proof_image, product_proof_image, status, review_notes,
-  │                     resolved_by, handover_confirmed_by, handover_confirmed_at)
-  │
-  └──< notifications (id, recipient_id, message, type, related_id, is_read, created_at)
+```text
++---------------------------------------------------------------------------------------+
+|                                    JAVA CLIENT                                        |
+|   OpenJFX 17 Desktop Client (FXML + CSS + Asynchronous HttpClient + Jackson)          |
+|                                                                                       |
+|   [ Login View ]       [ Modern Dark Dashboard ]        [ Camera Capture & Upload ]  |
+|   - Gradient Canvas    - 3 Metric Gradient Cards        - Viewfinder HUD Snapshot     |
+|   - Centered Avatar    - Real-Time Activity Table       - Image Thumbnail Preview     |
+|   - Quick Demo Fill    - Location Density Progress      - Multipart Form-Data Builder |
++-------------------------------------------+-------------------------------------------+
+                                            | REST API (JSON / Multipart HTTP)
+                                            v
++---------------------------------------------------------------------------------------+
+|                                  SPRING BOOT BACKEND                                  |
+|                                                                                       |
+|   [ Security Layer ]                                                                  |
+|   - Spring Security 6 (Stateless SessionCreationPolicy.STATELESS)                     |
+|   - JJWT 0.12.5 Parser & Base64-256 HMAC-SHA Key Verification                         |
+|   - Role-Based Access Control (@EnableMethodSecurity: STUDENT, STAFF, ADMIN)          |
+|                                                                                       |
+|   [ Business Engines ]                                                                |
+|   - StateTransitionService: Strict Enum Lifecycle Validation (HTTP 409 on violation)  |
+|   - MatchingService: Deterministic 5-Factor Weighted Jaccard Matching (Score >= 55)   |
+|   - ClaimService: Human Verification Desk, Proof Documents, Handover Audit Trail      |
+|   - RetentionScheduler: Daily Cron (0 0 2 * * *) auto-expiring uncollected inventory  |
+|                                                                                       |
+|   [ Data Access Layer ]                                                               |
+|   - Spring Data JPA + Hibernate 6                                                     |
+|   - @Version Optimistic Locking on Item records                                       |
+|   - Dedicated Blob Separation: ItemImage & ClaimProof (Shared PK @MapsId)             |
++-------------------------------------------+-------------------------------------------+
+                                            | JDBC / HikariCP Pool
+                                            v
++---------------------------------------------------------------------------------------+
+|                                    MYSQL DATABASE                                     |
+|   Schema: campus_lostfound (MySQL 8.0+)                                               |
+|   Tables: users, items, item_images, claims, claim_proofs, matches, notifications...  |
++---------------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 🚀 Quick Setup & Installation
+## 🛠️ Strict Tech Stack
 
-### 1. Prerequisites
-- **JDK 17** (Temurin / Adoptium or Oracle JDK)
-- **MySQL Server 8.x**
-- **Maven** or **IntelliJ IDEA**
+- **Backend:**
+  - Java 17 (OpenJDK / Temurin)
+  - Spring Boot 3.2.0 (`jakarta.*` namespace)
+  - Spring Security 6 + JJWT 0.12.5 (JJwt 0.12 API using `.getPayload()`)
+  - Spring Data JPA + Hibernate 6 (`@Version` optimistic locking, `@Transactional`)
+  - Lombok (`@Getter`, `@Setter`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`)
+  - HikariCP Connection Pool
+  - MySQL 8.0+ (`LONGBLOB` for images and proofs, zero blobs in list DTOs)
+  - H2 Database (In-memory MySQL compatibility mode for unit and integration tests)
+- **Frontend:**
+  - JavaFX 17 (`javafx-controls`, `javafx-fxml`, `javafx-graphics`, `javafx-swing`)
+  - `javafx-maven-plugin:0.0.8`
+  - Java 11+ `java.net.http.HttpClient` with custom `MultipartBodyPublisher`
+  - Jackson Databind + `jackson-datatype-jsr310` (Java 8 date/time serialization)
+  - Custom camera snapshot utility (`CameraCaptureDialog`) for item photos
+- **Root Multi-Module Build:**
+  - Parent `pom.xml` aggregating `backend` and `client` modules.
 
-### 2. Prepare MySQL Database
-```sql
-CREATE DATABASE IF NOT EXISTS lostfound
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+---
+
+## 🚀 Setup & Run Instructions (Windows)
+
+### Prerequisites
+- **JDK 17** installed (e.g. `C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot`)
+- **Maven 3.8+** installed
+- **MySQL 8.0+** running locally on port 3306 (or Docker)
+
+### Option A: Running Database with Docker
+If MySQL is not installed locally, start MySQL 8.0 via Docker Compose:
+```bash
+docker-compose up -d
 ```
 
-### 3. Application Properties
-Configuration is located in `src/main/resources/application.properties`:
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/lostfound?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-spring.datasource.username=root
-spring.datasource.password=YOUR_MYSQL_PASSWORD
-server.port=8081
-```
+### Option B: Local MySQL Configuration
+The application connects by default to:
+- **URL:** `jdbc:mysql://localhost:3306/campus_lostfound?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`
+- **Username:** `root`
+- **Password:** `Akash10071845` (configurable via `DB_PASSWORD` environment variable)
 
-### 4. Build and Run
-From the terminal:
+---
+
+### Option C: One-Click Quick Launch (Windows)
+Double-click `run.bat` in the project root:
+- Starts the Spring Boot backend server on **Port 8088** in a dedicated window
+- Waits 6 seconds for Tomcat to initialize
+- Launches the JavaFX desktop client GUI automatically
+
+Alternatively, run individually:
+- **Backend:** Double-click `run-backend.bat`
+- **Frontend:** Double-click `run-client.bat`
+
+---
+
+### Running from Command Line / PowerShell
+
+#### 1. Compile and Test Both Modules
 ```powershell
-# Run Unit Tests
-mvn test
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+mvn clean test
+```
 
-# Start Application Server
+#### 2. Start the Backend Server (Port 8088)
+Open a terminal window and run:
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot"
+cd backend
 mvn spring-boot:run
 ```
+*The server starts on `http://localhost:8088` (custom port to avoid collisions with other local services) and automatically seeds default users and sample data on its first run.*
 
-Or open the folder in **IntelliJ IDEA** and execute `LostFoundApplication.java`.
-
-Access the application in your browser:  
-👉 **`http://localhost:8081`**
-
----
-
-## 🔑 Default Accounts
-
-| Role | Username | Password | Purpose |
-|---|---|---|---|
-| **Administrator** | `admin` | `admin123` | Full access to Admin Dashboard (`/admin-claims.html`) |
-| **Student** | Any registered user | As registered | Standard student features: report, claim, and search |
-
----
-
-## 🧪 Unit Testing Suite
-
-The application includes an automated unit test suite covering critical business logic:
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running com.example.lostfound.service.ClaimServiceTest
-Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
-Running com.example.lostfound.service.MatchingServiceTest
-Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
-
-Results:
-Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
-[INFO] BUILD SUCCESS
+#### 3. Start the JavaFX Desktop Client
+Open a second terminal window and run:
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot"
+cd client
+mvn javafx:run
 ```
 
-- **ClaimServiceTest (9 Tests):** Claim submission validation, own-item protection, status state machine, double-return prevention, and transactional resolution.
-- **MatchingServiceTest (9 Tests):** Multi-factor scoring weights, location similarity, date tolerance, text comparison, and notification trigger thresholds.
+#### 4. Run Automated Smoke Test
+To verify the entire end-to-end lifecycle (Registration, Login, Report Lost, Log Found, Matching Engine, Claim Verification, Notifications):
+```powershell
+powershell -ExecutionPolicy Bypass -File .\smoke-test.ps1
+```
 
 ---
 
-## 📡 REST API Reference
+### Running in IntelliJ IDEA / VS Code
 
-| Endpoint | Method | Role | Description |
-|---|---|---|---|
-| `/api/auth/register` | `POST` | Public | Register new student account |
-| `/api/auth/login` | `POST` | Public | Sign in and obtain JWT token |
-| `/api/items` | `GET` | Public | Search items with query, category, location, and type filters |
-| `/api/items` | `POST` | Student | Submit lost or found report (Multipart with image) |
-| `/api/items/{id}` | `GET` | Public | Retrieve single item details |
-| `/api/items/my-reports` | `GET` | Student | Retrieve user's submitted reports |
-| `/api/dashboard/summary` | `GET` | Public | Total lost, found, returned, and pending counts |
-| `/api/dashboard/recent` | `GET` | Public | 10 most recent reports |
-| `/api/claims/{itemId}` | `POST` | Student | Submit claim with dual evidence upload |
-| `/api/claims/my` | `GET` | Student | Retrieve user's submitted claims |
-| `/api/claims/all` | `GET` | Admin | Retrieve all claims across all statuses |
-| `/api/claims/{id}/approve` | `PATCH` | Admin | Approve claim for desk handover |
-| `/api/claims/{id}/reject` | `PATCH` | Admin | Reject claim with mandatory review notes |
-| `/api/claims/{id}/confirm-return` | `POST` | Admin | Confirm physical return (Atomic Handover) |
-| `/api/admin/stats` | `GET` | Admin | Summary metrics for admin dashboard |
-| `/api/admin/items` | `GET` | Admin | Master items list for admin moderation |
-| `/api/admin/users` | `GET` | Admin | List all student and administrator accounts |
-| `/api/admin/users/{id}/role` | `PUT` | Admin | Promote to Admin or Demote to User |
-| `/api/admin/reports` | `GET` | Admin | Category breakdown and completed return log |
-| `/api/admin/notifications` | `GET` | Admin | System-wide audit log of notifications |
-| `/api/notifications` | `GET` | Student | Retrieve current user's notification stream |
-| `/api/notifications/unread-count`| `GET` | Student | Count of unread notifications |
-| `/api/notifications/{id}/read` | `PATCH` | Student | Mark specific notification as read |
-| `/api/notifications/read-all` | `PATCH` | Student | Mark all notifications as read |
+1. **Open Project:** Open `C:\Users\Akash P\Downloads\Lost-and-Found-Portal` as a Maven project.
+2. **Project SDK:** Ensure Project SDK is set to **Java 17**.
+3. **Backend Run Configuration:**
+   - Main class: `com.campus.lostfound.BackendApplication`
+   - Working directory: `C:\Users\Akash P\Downloads\Lost-and-Found-Portal\backend`
+4. **Client Run Configuration:**
+   - Main class: `com.campus.lostfound.client.MainApp`
+   - Working directory: `C:\Users\Akash P\Downloads\Lost-and-Found-Portal\client`
+   - VM options (if required by IDE modularity):
+     `--add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.swing`
 
 ---
 
-## 👨‍💻 Developer & College Credits
+## 🔑 Seeded Demo Accounts
 
-<div align="center">
-  <h3>Project Developed by</h3>
-  <h2>AKASH P</h2>
-  <p><b>Department of Computer Science and Engineering (III CSE A)</b></p>
-  <p><b>PSG Institute of Technology and Applied Research (PSG iTech)</b></p>
-  <p>Coimbatore, Tamil Nadu, India</p>
-  <br/>
-  <img src="https://img.shields.io/badge/Student%20ID-24Z109%20%2F%20III%20CSE%20A-6366f1?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Institution-PSG%20iTech-0284c7?style=for-the-badge"/>
-</div>
+On startup, the system automatically seeds default accounts with pre-hashed BCrypt credentials:
+
+| Role | Email | Roll Number | Password | Capabilities |
+| :--- | :--- | :--- | :--- | :--- |
+| **ADMIN** | `admin@campus.edu` | — | `Admin@123` | System stats, user management, item merging, manual matching, audit log |
+| **STAFF** | `staff@campus.edu` | — | `Staff@123` | Log found items, warehouse inventory, claim review desk, item disposal |
+| **STUDENT** | `student@campus.edu` | `21CS001` | `Student@123` | Report lost items, view smart matches, submit ownership claims |
+
+*Note: The login view includes one-click demo login buttons to instantly auto-fill credentials for any role.*
 
 ---
 
-<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=9,10,16,22,25&height=120&section=footer&animation=twinkling"/>
+## 📋 Complete REST API Reference
+
+All protected endpoints require `Authorization: Bearer <JWT_TOKEN>`.
+
+### Authentication (`/api/auth`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/auth/register` | Public | Register new student (`STUDENT` role only). Rejects duplicates with 409. |
+| `POST` | `/api/auth/login` | Public | Authenticate via email or roll number + password. Returns JWT token. |
+| `GET` | `/api/auth/me` | Authenticated | Get current authenticated user profile. |
+
+### Items (`/api/items`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/items` | Authenticated | Create lost (Student) or found (Staff/Admin) item. Supports multipart JSON + photo. |
+| `GET` | `/api/items/search` | Authenticated | Search items with JPA Specifications (role-based visibility applied). |
+| `GET` | `/api/items/mine` | Student | List all lost reports filed by the caller. |
+| `GET` | `/api/items/inventory` | Staff, Admin | Paginated warehouse inventory of held found items. |
+| `GET` | `/api/items/{id}` | Authenticated | View item details (student receives `ItemPublicDto`; staff receives `ItemStaffDto`). |
+| `GET` | `/api/items/{id}/photo` | Authenticated | Stream photo bytes with correct `Content-Type` (JPEG/PNG). |
+| `PUT` | `/api/items/{id}` | Owner, Admin | Edit lost report details while in `OPEN` or `MATCHED` status. |
+| `PATCH/POST` | `/api/items/{id}/cancel` | Owner, Admin | Cancel a lost item report. |
+| `POST` | `/api/items/{id}/dispose` | Staff, Admin | Mark expired found item as `DONATED` or `DISPOSED`. |
+
+### Claims (`/api/claims`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/claims` | Student | Submit ownership claim (supports optional proof document). 3-rejection limit enforced. |
+| `GET` | `/api/claims/mine` | Student | List all claims submitted by the caller. |
+| `GET` | `/api/claims` | Staff, Admin | View and filter all claims across campus. |
+| `POST` | `/api/claims/{id}/review` | Staff, Admin | Review claim (`APPROVE` or `REJECT` with mandatory rejection note). |
+| `GET` | `/api/claims/{id}/proof` | Staff, Admin | Stream claimant's uploaded proof document (JPEG, PNG, or PDF). |
+
+### Smart Matches (`/api/matches`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/matches` | Authenticated | List suggested matches for student's items (or all matches for staff/admin). |
+| `PATCH/POST` | `/api/matches/{id}/dismiss` | Owner, Staff | Dismiss a match. Reverts item from `MATCHED` to `OPEN` if no matches remain. |
+
+### Notifications (`/api/notifications`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/notifications` | Authenticated | Paginated in-app notifications for caller. |
+| `GET` | `/api/notifications/unread-count` | Authenticated | Get real-time unread notification count. |
+| `PATCH/POST` | `/api/notifications/{id}/read` | Authenticated | Mark notification as read. |
+| `PATCH/POST` | `/api/notifications/read-all` | Authenticated | Mark all caller's notifications as read. |
+
+### Administration (`/api/admin`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/admin/stats` | Admin | Comprehensive system recovery statistics, location density, and return rate. |
+| `GET` | `/api/admin/users` | Admin | List all registered users. |
+| `POST` | `/api/admin/users` | Admin | Create privileged `STAFF` or `ADMIN` accounts. |
+| `PATCH/POST` | `/api/admin/users/{id}/active` | Admin | Deactivate/reactivate user account (self-deactivation forbidden). |
+| `PATCH/POST` | `/api/admin/users/{id}/role` | Admin | Change user role (self-demotion forbidden). |
+| `POST` | `/api/admin/matches` | Admin | Create a forced manual match between lost and found items. |
+| `POST` | `/api/admin/items/merge` | Admin | Merge duplicate item records and migrate existing matches. |
+| `GET` | `/api/admin/audit` | Admin | Immutable paginated audit log of system operations. |
+
+---
+
+## 🔄 State Machine & Business Integrity
+
+### LOST Item Lifecycle
+```text
+           [ Student Reports ]
+                   |
+                   v
+               +-------+
+               | OPEN  | <----+
+               +-------+      | (All matches
+                |     \       |  dismissed)
+ (Match Score   |      \      |
+    >= 55)      v       \     |
+            +---------+  \    |
+            | MATCHED | --+---+
+            +---------+   |
+                |         | (Owner cancels)
+(Claim Approved/|         v
+Owner Recovered)|     +-----------+
+                +---> | CANCELLED |
+                |     +-----------+
+                v
+            +--------+
+            | CLOSED |
+            +--------+
+```
+
+### FOUND Item Lifecycle
+```text
+            [ Staff Logs Found ]
+                     |
+                     v
+                 +--------+
+                 | LISTED | <-----+
+                 +--------+       | (Claim
+                  /   |   \       |  Rejected)
+                 /    |    +------+
+  (Claim Submit)/     | (90-Day Retention Expired)
+               v      v
+      +---------------+  +---------+
+      | CLAIM_PENDING |  | EXPIRED |
+      +---------------+  +---------+
+              |             /     \
+(Claim Review |  (Staff    /       \ (Staff
+   Approved)  |   Donates)/         \ Disposes)
+              v          v           v
+         +----------+ +---------+ +----------+
+         | RETURNED | | DONATED | | DISPOSED |
+         +----------+ +---------+ +----------+
+```
+
+### Enforced Business Invariants
+1. **Illegal State Transitions:** Calling an invalid transition throws `IllegalStateTransitionException` resulting in HTTP 409 Conflict.
+2. **Optimistic Locking:** The `items` table employs `@Version Long version` to detect and reject concurrent modifications.
+3. **Claim Limits:** A student is strictly capped at **3 rejected claims** per found item to eliminate brute-force guessing of secret details.
+4. **Data Isolation:** `ItemPublicDto` completely strips `hiddenDetail`, `storedAt`, and `ownerRollNumber`. Students can never inspect other students' lost reports.
+5. **Separation of Blobs:** Photos and proofs reside in isolated 1-to-1 `@MapsId` tables (`ItemImage`, `ClaimProof`). Querying item or claim lists never transfers byte arrays over the wire.
+
+---
+
+## ⚡ Deterministic 5-Factor Matching Engine
+
+The rule-based matching engine scores pairs on a **0 to 100** scale with deterministic weights:
+
+1. **Category Matching (20 points):** Hard requirement. Items in different categories immediately score `0`.
+2. **Temporal Consistency (Hard Rule + 20/10 points):** Found event date cannot precede the lost event date.
+   - Gap $\le$ 2 days: `+20 points`
+   - Gap $\le$ 7 days: `+10 points`
+3. **Location Similarity (30 points):** Case-insensitive match on campus location (e.g., "Library").
+4. **Color Matching (10 points):** Case-insensitive comparison of non-blank color attributes.
+5. **Tokenized Text Similarity ($\le 20$ points):**
+   - Combines title, description, and brand.
+   - Cleans punctuation and filters English stop words (`the`, `with`, `near`, `found`, etc.) and words shorter than 3 characters.
+   - Calculates **Jaccard Similarity Coefficient**:
+     $$J(A, B) = \frac{|A \cap B|}{|A \cup B|}$$
+   - Weighted by 20 points: $\text{Score} += \text{round}(J(A, B) \times 20)$.
+6. **Threshold & Notifications:** Pairs with score $\ge 55$ automatically transition the lost item to `MATCHED` and dispatch an in-app notification to the owner detailing the top 3 matches.
+
+---
+
+## 💼 Resume & Portfolio Highlights
+
+- **Full-Stack Multi-Module Java Architecture:** Engineered an end-to-end campus lost & found system comprising a Spring Boot 3.2 service and an OpenJFX 17 desktop client communicating via asynchronous `java.net.http.HttpClient` with custom multipart form-data builders.
+- **Enterprise Spring Security 6 & JJWT 0.12.5:** Architected a stateless token security pipeline implementing Base64-256 HMAC-SHA key derivation, custom JSON 401/403 entry points, and `@EnableMethodSecurity` role isolation across Student, Staff, and Admin tiers.
+- **Deterministic 5-Factor Rule-Based Matching Engine:** Implemented an in-memory heuristic algorithm combining category constraints, date chronology, location scoring, and Jaccard token set similarity to discover lost-and-found matches with zero external AI dependencies.
+- **Strict State Machine & Concurrency Control:** Designed an optimistic-locking state machine enforcing item lifecycles with HTTP 409 transition rejection and a 3-rejection claim fraud protection rule.
+- **High-Performance JPA Blob Separation:** Architected database schema utilizing `@MapsId` shared primary key mappings for `ItemImage` and `ClaimProof`, eliminating LONGBLOB payload overhead from JPA list queries and pagination.
+- **Automated Retention Scheduler & Live Desktop Polling:** Developed a daily Spring `@Scheduled` cron job to automate uncollected property expiration and warning alerts, paired with a JavaFX 30-second background polling timeline for live notification delivery.

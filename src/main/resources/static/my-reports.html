@@ -3,10 +3,104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Reports — Lost &amp; Found Portal</title>
+<title>My Reports &amp; Claims — Lost &amp; Found Portal</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="/css/dashboard.css">
+<style>
+  .hub-nav {
+    display: flex;
+    gap: 8px;
+    background: var(--bg-card);
+    padding: 8px 12px;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    flex-wrap: wrap;
+  }
+  .hub-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  .hub-tab-btn:hover {
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+  }
+  .hub-tab-btn.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+    border-color: rgba(255,255,255,0.2);
+  }
+  .hub-tab-btn .badge-count {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .hub-section {
+    display: none;
+  }
+  .hub-section.active {
+    display: block;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .evidence-preview-img {
+    width: 100%;
+    max-height: 240px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    background: #0f172a;
+    cursor: pointer;
+    transition: transform .2s;
+  }
+  .evidence-preview-img:hover {
+    transform: scale(1.02);
+  }
+  .match-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: all .2s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .match-card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
+  }
+  .match-score-pill {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+</style>
 </head>
 <body>
 <div class="app-layout">
@@ -15,59 +109,236 @@
     <div id="topbar-mount"></div>
     <div class="main-content">
 
+      <!-- Header -->
       <div class="page-header">
-        <h2><i class="fas fa-file-alt me-2" style="color:#7c3aed"></i>My Reports</h2>
+        <div>
+          <h2><i class="fas fa-file-alt me-2" style="color:#7c3aed"></i>My Reports &amp; Incoming Claims</h2>
+          <p style="color:var(--text-muted);font-size:13px;margin:2px 0 0">
+            Manage items you reported, review incoming peer claims on items you found, and view automated matches.
+          </p>
+        </div>
         <div style="display:flex;gap:10px">
           <a href="/report-lost.html" class="btn btn-danger btn-sm"><i class="fas fa-plus"></i> Report Lost</a>
           <a href="/report-found.html" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> Report Found</a>
         </div>
       </div>
 
-      <!-- Filter tabs -->
-      <div style="display:flex;gap:8px;margin-bottom:20px">
-        <button class="btn btn-primary btn-sm" onclick="filterItems('all',this)" id="btnAll">All</button>
-        <button class="btn btn-outline btn-sm" onclick="filterItems('lost',this)" id="btnLost">Lost</button>
-        <button class="btn btn-outline btn-sm" onclick="filterItems('found',this)" id="btnFound">Found</button>
+      <!-- Hub Navigation Tabs -->
+      <nav class="hub-nav">
+        <button class="hub-tab-btn active" onclick="switchHubTab('reports', this)">
+          <i class="fas fa-list-ul"></i> My Reported Items
+          <span class="badge-count" id="badgeReportsCount">0</span>
+        </button>
+        <button class="hub-tab-btn" onclick="switchHubTab('incoming', this)">
+          <i class="fas fa-inbox"></i> Incoming Claims on Found Items
+          <span class="badge-count" id="badgeIncomingCount" style="background:#f59e0b;color:#000">0</span>
+        </button>
+        <button class="hub-tab-btn" onclick="switchHubTab('matches', this)">
+          <i class="fas fa-wand-magic-sparkles"></i> Potential Matches
+          <span class="badge-count" id="badgeMatchesCount">0</span>
+        </button>
+      </nav>
+
+      <!-- ============================================================== -->
+      <!-- SECTION 1: MY REPORTED ITEMS                                   -->
+      <!-- ============================================================== -->
+      <div id="section-reports" class="hub-section active">
+        <!-- Filter sub-tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-primary btn-sm" onclick="filterItems('all',this)" id="btnAll">All</button>
+          <button class="btn btn-outline btn-sm" onclick="filterItems('lost',this)" id="btnLost">Lost</button>
+          <button class="btn btn-outline btn-sm" onclick="filterItems('found',this)" id="btnFound">Found</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="reportsBody">
+              <tr><td colspan="8" style="text-align:center;padding:24px"><span class="spinner"></span> Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="table-responsive">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Item</th>
-              <th>Category</th>
-              <th>Type</th>
-              <th>Location</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="reportsBody">
-            <tr><td colspan="8" style="text-align:center;padding:24px"><span class="spinner"></span> Loading…</td></tr>
-          </tbody>
-        </table>
+      <!-- ============================================================== -->
+      <!-- SECTION 2: INCOMING CLAIMS ON FOUND ITEMS                      -->
+      <!-- ============================================================== -->
+      <div id="section-incoming" class="hub-section">
+        <div class="alert alert-info" style="border-radius:12px;margin-bottom:20px;font-size:13px">
+          <i class="fas fa-circle-info me-1"></i>
+          <b>Peer-to-Peer Claim Resolution:</b> When another student claims an item you found, you can examine their submitted identification proof and product details directly. Once verified, approve their claim and confirm the physical handover once they collect it!
+        </div>
+
+        <div id="incomingClaimsContainer">
+          <div style="text-align:center;padding:30px"><span class="spinner"></span> Loading incoming claims…</div>
+        </div>
       </div>
 
+      <!-- ============================================================== -->
+      <!-- SECTION 3: POTENTIAL MATCHES                                   -->
+      <!-- ============================================================== -->
+      <div id="section-matches" class="hub-section">
+        <div class="alert alert-info" style="border-radius:12px;margin-bottom:20px;font-size:13px">
+          <i class="fas fa-wand-magic-sparkles me-1"></i>
+          <b>Automated Matching:</b> Our engine compares category, description, colour, location, and dates between lost and found items.
+        </div>
+
+        <div id="matchesContainer">
+          <div style="text-align:center;padding:30px"><span class="spinner"></span> Checking matches…</div>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /content-wrapper -->
+</div><!-- /app-layout -->
+
+<!-- ================================================================== -->
+<!-- EVIDENCE REVIEW MODAL                                              -->
+<!-- ================================================================== -->
+<div class="modal fade" id="claimEvidenceModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:16px;color:var(--text-primary)">
+      <div class="modal-header" style="border-bottom:1px solid var(--border-subtle)">
+        <div>
+          <h5 class="modal-title mb-0" id="claimModalTitle" style="color:#fff"><i class="fas fa-file-shield text-primary me-2"></i>Review Claimant Evidence</h5>
+          <small class="text-muted" id="claimModalSub">Verify identity and ownership documentation</small>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:24px">
+        <div class="row g-4">
+          <!-- Left: Details -->
+          <div class="col-lg-5">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:12px;padding:16px">
+              <h6 style="color:#a5b4fc;font-weight:700;margin-bottom:10px;border-bottom:1px solid var(--border-subtle);padding-bottom:6px">
+                <i class="fas fa-box me-1"></i> Item Claimed
+              </h6>
+              <div id="modalItemDetails" style="font-size:13px;margin-bottom:16px"></div>
+
+              <h6 style="color:#a5b4fc;font-weight:700;margin-bottom:10px;border-bottom:1px solid var(--border-subtle);padding-bottom:6px">
+                <i class="fas fa-user-tag me-1"></i> Claimant Details
+              </h6>
+              <div id="modalClaimantDetails" style="font-size:13px;margin-bottom:16px"></div>
+
+              <h6 style="color:#a5b4fc;font-weight:700;margin-bottom:10px;border-bottom:1px solid var(--border-subtle);padding-bottom:6px">
+                <i class="fas fa-comment-dots me-1"></i> Reason &amp; Identifying Marks
+              </h6>
+              <div id="modalReasonDetails" style="font-size:13px;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;border:1px solid var(--border-subtle)"></div>
+            </div>
+          </div>
+
+          <!-- Right: Document Previews -->
+          <div class="col-lg-7">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:12px;padding:12px">
+                  <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#93c5fd">
+                    <i class="fas fa-id-card me-1"></i> ID Proof
+                  </div>
+                  <div style="min-height:200px;display:flex;align-items:center;justify-content:center;background:#090d16;border-radius:8px">
+                    <img id="modalGovImg" class="evidence-preview-img" onclick="openFullImg(this.src)" title="Click to view full size">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:12px;padding:12px">
+                  <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#86efac">
+                    <i class="fas fa-receipt me-1"></i> Product / Item Proof
+                  </div>
+                  <div style="min-height:200px;display:flex;align-items:center;justify-content:center;background:#090d16;border-radius:8px">
+                    <img id="modalProductImg" class="evidence-preview-img" onclick="openFullImg(this.src)" title="Click to view full size">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="alert alert-info mt-3 mb-0" style="font-size:12px;background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3)">
+              <i class="fas fa-magnifying-glass me-1"></i> Click on any proof image to open the high-resolution version.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="modalActions" style="border-top:1px solid var(--border-subtle)">
+        <!-- Injected dynamically -->
+      </div>
     </div>
   </div>
 </div>
 
+<!-- ================================================================== -->
+<!-- REJECT NOTE MODAL                                                  -->
+<!-- ================================================================== -->
+<div class="modal fade" id="rejectNoteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:14px;color:var(--text-primary)">
+      <div class="modal-header" style="border-bottom:1px solid var(--border-subtle)">
+        <h5 class="modal-title" style="color:#f87171"><i class="fas fa-times-circle me-2"></i>Reject Claim</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-muted)">Please enter a brief reason so the claimant understands why the claim could not be verified:</p>
+        <textarea id="rejectNoteInput" class="form-control" rows="3" placeholder="e.g. Proof description does not match unique item details..."></textarea>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--border-subtle)">
+        <button type="button" class="btn btn-outline btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm" id="btnConfirmReject">
+          <i class="fas fa-ban"></i> Confirm Reject
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/app.js"></script>
 <script>
 let allItems = [];
+let incomingClaims = [];
+let potentialMatches = [];
+let activeHubTab = 'reports';
+let evidenceModal = null;
+let rejectModal = null;
+let targetClaimId = null;
 
 (async () => {
-  await initPage({ activePage: 'my-reports', pageTitle: 'My Reports', requireAuth: true });
+  await initPage({ activePage: 'my-reports', pageTitle: 'My Reports & Hub', requireAuth: true });
+  evidenceModal = new bootstrap.Modal(document.getElementById('claimEvidenceModal'));
+  rejectModal = new bootstrap.Modal(document.getElementById('rejectNoteModal'));
+
+  // Load all hub data
   loadMyReports();
+  loadIncomingClaims();
+  loadPotentialMatches();
 })();
 
+// ── TAB SWITCHING ─────────────────────────────────────────────
+function switchHubTab(tabName, btn) {
+  activeHubTab = tabName;
+  document.querySelectorAll('.hub-tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  document.querySelectorAll('.hub-section').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(`section-${tabName}`);
+  if (target) target.classList.add('active');
+}
+
+// ── 1. MY REPORTS ─────────────────────────────────────────────
 async function loadMyReports() {
   try {
     const res = await apiFetch('/api/items/my-reports');
     if (res.status === 401) { window.location = '/login.html'; return; }
     allItems = await res.json();
+    document.getElementById('badgeReportsCount').textContent = allItems.length;
     renderItems(allItems);
   } catch {
     document.getElementById('reportsBody').innerHTML =
@@ -76,7 +347,7 @@ async function loadMyReports() {
 }
 
 function filterItems(type, btn) {
-  document.querySelectorAll('.page-header ~ div .btn').forEach(b => {
+  document.querySelectorAll('#section-reports .btn').forEach(b => {
     b.className = 'btn btn-outline btn-sm';
   });
   btn.className = 'btn btn-primary btn-sm';
@@ -124,6 +395,285 @@ function renderItems(items) {
     <td>${statusBadge(i.status)}</td>
     <td><a href="/item.html?id=${i.id}" class="btn btn-outline btn-sm">View</a></td>
   </tr>`).join('');
+}
+
+// ── 2. INCOMING CLAIMS (PEER-TO-PEER) ──────────────────────────
+async function loadIncomingClaims() {
+  const container = document.getElementById('incomingClaimsContainer');
+  try {
+    const res = await apiFetch('/api/claims/incoming');
+    if (!res.ok) throw new Error();
+    incomingClaims = await res.json();
+    const pendingCount = incomingClaims.filter(c => c.status === 'PENDING_VERIFICATION').length;
+    document.getElementById('badgeIncomingCount').textContent = pendingCount || incomingClaims.length;
+
+    if (!incomingClaims.length) {
+      container.innerHTML = `
+        <div class="card"><div class="card-body">
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h4>No incoming claims yet</h4>
+            <p>When other students claim items that you reported as found, their claims will appear here for your review.</p>
+          </div>
+        </div></div>`;
+      return;
+    }
+
+    container.innerHTML = incomingClaims.map(c => `
+      <div class="card" style="margin-bottom:16px;border:1px solid ${c.status==='PENDING_VERIFICATION'?'rgba(245,158,11,0.4)':c.status==='APPROVED_AWAITING_HANDOVER'?'rgba(16,185,129,0.4)':'var(--border-subtle)'}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <span style="font-weight:700;font-size:15px">${escHtml(c.itemPost?.title || 'Found Item')}</span>
+            <span style="margin-left:10px">${statusBadge(c.status)}</span>
+          </div>
+          <small style="color:var(--text-muted)">Claim #${c.id} · ${c.createdAt ? c.createdAt.substring(0,10) : ''}</small>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:16px">
+            <div>
+              <div style="font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase">Claimant Info</div>
+              <div style="font-size:14px;margin-top:6px">
+                <div><b>Name:</b> ${escHtml(c.fullName)} (Age ${c.age})</div>
+                <div><b>Phone:</b> <a href="tel:${escHtml(c.mobile)}" style="color:#60a5fa">${escHtml(c.mobile)}</a></div>
+                <div><b>Proof Submitted:</b> ${escHtml(c.proofType)}</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase">Item Found</div>
+              <div style="font-size:14px;margin-top:6px">
+                <div><b>Category:</b> ${escHtml(c.itemPost?.category||'—')}</div>
+                <div><b>Location:</b> ${escHtml(c.itemPost?.location||'—')}</div>
+                <div><b>Date:</b> ${c.itemPost?.dateEvent||'—'}</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.03);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;border:1px solid var(--border-subtle)">
+            <b>Claimant Reason / Identification:</b> ${escHtml(c.reason || 'None provided')}
+          </div>
+
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <button class="btn btn-primary btn-sm" onclick="openClaimReviewModal(${c.id})">
+              <i class="fas fa-eye me-1"></i> Review Proof Documents
+            </button>
+
+            ${c.status === 'PENDING_VERIFICATION' ? `
+              <button class="btn btn-success btn-sm" onclick="approveIncomingClaim(${c.id})">
+                <i class="fas fa-check me-1"></i> Approve Claim
+              </button>
+              <button class="btn btn-outline btn-sm" style="color:#f87171;border-color:rgba(248,113,113,0.4)" onclick="promptRejectClaim(${c.id})">
+                <i class="fas fa-times me-1"></i> Reject
+              </button>
+            ` : ''}
+
+            ${c.status === 'APPROVED_AWAITING_HANDOVER' ? `
+              <button class="btn btn-success btn-sm" onclick="confirmHandover(${c.id})">
+                <i class="fas fa-handshake me-1"></i> Confirm Physical Handover
+              </button>
+              <span style="font-size:12px;color:#34d399;font-weight:600">
+                <i class="fas fa-clock me-1"></i> Awaiting physical handover to claimant
+              </span>
+            ` : ''}
+
+            ${c.status === 'COMPLETED' ? `
+              <span style="font-size:12px;color:#34d399;font-weight:600">
+                <i class="fas fa-check-double me-1"></i> Handover completed &amp; resolved
+              </span>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="alert alert-danger">Failed to load incoming claims.</div>';
+  }
+}
+
+// ── 3. POTENTIAL MATCHES ──────────────────────────────────────
+async function loadPotentialMatches() {
+  const container = document.getElementById('matchesContainer');
+  try {
+    const res = await apiFetch('/api/items/my-matches');
+    if (!res.ok) throw new Error();
+    potentialMatches = await res.json();
+    document.getElementById('badgeMatchesCount').textContent = potentialMatches.length;
+
+    if (!potentialMatches.length) {
+      container.innerHTML = `
+        <div class="card"><div class="card-body">
+          <div class="empty-state">
+            <i class="fas fa-wand-magic-sparkles"></i>
+            <h4>No potential matches found</h4>
+            <p>When our system finds potential correlations between your lost/found items and other reports, they will appear here.</p>
+          </div>
+        </div></div>`;
+      return;
+    }
+
+    container.innerHTML = potentialMatches.map(m => {
+      const lost = m.lostItem || {};
+      const found = m.foundItem || {};
+      return `
+        <div class="match-card">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div class="match-score-pill">
+              <i class="fas fa-sparkles"></i> ${m.score || 70}% Similarity Score
+            </div>
+            <small style="color:var(--text-muted)">Match #${m.id} · Status: ${statusBadge(m.status)}</small>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);padding:14px;border-radius:12px">
+                <div style="font-size:12px;color:#f87171;font-weight:700;text-transform:uppercase;margin-bottom:4px">
+                  <i class="fas fa-exclamation-circle me-1"></i> Lost Item
+                </div>
+                <div style="font-size:15px;font-weight:700">${escHtml(lost.title || 'Untitled')}</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                  Category: <b>${escHtml(lost.category||'—')}</b> | Location: <b>${escHtml(lost.location||'—')}</b>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted)">Date: ${lost.dateEvent || '—'}</div>
+                <a href="/item.html?id=${lost.id}" class="btn btn-outline btn-sm mt-2" target="_blank">View Lost Item</a>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);padding:14px;border-radius:12px">
+                <div style="font-size:12px;color:#34d399;font-weight:700;text-transform:uppercase;margin-bottom:4px">
+                  <i class="fas fa-hand-holding-heart me-1"></i> Found Item
+                </div>
+                <div style="font-size:15px;font-weight:700">${escHtml(found.title || 'Untitled')}</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                  Category: <b>${escHtml(found.category||'—')}</b> | Location: <b>${escHtml(found.location||'—')}</b>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted)">Date: ${found.dateEvent || '—'}</div>
+                <div class="mt-2 d-flex gap-2">
+                  <a href="/item.html?id=${found.id}" class="btn btn-outline btn-sm" target="_blank">View Found Item</a>
+                  <a href="/item.html?id=${found.id}#claim" class="btn btn-primary btn-sm">Claim Item</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="alert alert-danger">Failed to load automated matches.</div>';
+  }
+}
+
+// ── CLAIM REVIEW MODAL LOGIC ──────────────────────────────────
+function openClaimReviewModal(claimId) {
+  const claim = incomingClaims.find(c => c.id === claimId);
+  if (!claim) return;
+  targetClaimId = claimId;
+
+  document.getElementById('modalItemDetails').innerHTML = `
+    <div><b>Title:</b> ${escHtml(claim.itemPost?.title || '—')}</div>
+    <div><b>Category:</b> ${escHtml(claim.itemPost?.category || '—')}</div>
+    <div><b>Location:</b> ${escHtml(claim.itemPost?.location || '—')}</div>
+    <div><b>Date Found:</b> ${claim.itemPost?.dateEvent || '—'}</div>
+  `;
+
+  document.getElementById('modalClaimantDetails').innerHTML = `
+    <div><b>Name:</b> ${escHtml(claim.fullName)} (Age ${claim.age})</div>
+    <div><b>Phone:</b> ${escHtml(claim.mobile)}</div>
+    <div><b>Proof Document Type:</b> ${escHtml(claim.proofType)}</div>
+    <div><b>Status:</b> ${statusBadge(claim.status)}</div>
+  `;
+
+  document.getElementById('modalReasonDetails').textContent = claim.reason || 'No description provided';
+
+  const token = getToken();
+  document.getElementById('modalGovImg').src = `/api/claims/proof/gov/${claim.id}?token=${encodeURIComponent(token)}`;
+  document.getElementById('modalProductImg').src = `/api/claims/proof/product/${claim.id}?token=${encodeURIComponent(token)}`;
+
+  const actions = document.getElementById('modalActions');
+  if (claim.status === 'PENDING_VERIFICATION') {
+    actions.innerHTML = `
+      <button type="button" class="btn btn-danger btn-sm" onclick="promptRejectClaim(${claim.id})">
+        <i class="fas fa-times me-1"></i> Reject Claim
+      </button>
+      <button type="button" class="btn btn-success btn-sm ms-auto" onclick="approveIncomingClaim(${claim.id})">
+        <i class="fas fa-check me-1"></i> Approve Claim
+      </button>
+    `;
+  } else if (claim.status === 'APPROVED_AWAITING_HANDOVER') {
+    actions.innerHTML = `
+      <button type="button" class="btn btn-success btn-sm ms-auto" onclick="confirmHandover(${claim.id})">
+        <i class="fas fa-handshake me-1"></i> Confirm Physical Handover
+      </button>
+    `;
+  } else {
+    actions.innerHTML = `<button type="button" class="btn btn-outline btn-sm ms-auto" data-bs-dismiss="modal">Close</button>`;
+  }
+
+  evidenceModal.show();
+}
+
+function openFullImg(url) {
+  if (url) window.open(url, '_blank');
+}
+
+// ── CLAIM ACTIONS ─────────────────────────────────────────────
+async function approveIncomingClaim(claimId) {
+  if (!confirm('Approve this claim? The claimant will be notified to coordinate handover with you.')) return;
+  try {
+    const res = await apiFetch(`/api/claims/${claimId}/approve`, { method: 'PATCH' });
+    if (res.ok) {
+      showToast('Claim approved successfully!', 'success');
+      if (evidenceModal) evidenceModal.hide();
+      loadIncomingClaims();
+    } else {
+      const msg = await res.text();
+      showToast(msg || 'Failed to approve claim', 'error');
+    }
+  } catch (e) {
+    showToast('Network error approving claim', 'error');
+  }
+}
+
+function promptRejectClaim(claimId) {
+  targetClaimId = claimId;
+  document.getElementById('rejectNoteInput').value = '';
+  if (evidenceModal) evidenceModal.hide();
+  rejectModal.show();
+}
+
+document.getElementById('btnConfirmReject').addEventListener('click', async () => {
+  if (!targetClaimId) return;
+  const note = document.getElementById('rejectNoteInput').value.trim();
+  try {
+    const res = await apiFetch(`/api/claims/${targetClaimId}/reject?notes=${encodeURIComponent(note)}`, { method: 'PATCH' });
+    if (res.ok) {
+      showToast('Claim rejected.', 'info');
+      rejectModal.hide();
+      loadIncomingClaims();
+    } else {
+      const msg = await res.text();
+      showToast(msg || 'Failed to reject claim', 'error');
+    }
+  } catch (e) {
+    showToast('Network error rejecting claim', 'error');
+  }
+});
+
+async function confirmHandover(claimId) {
+  if (!confirm('Confirm that you have physically handed over the item to the claimant? This will mark the item resolved and notify both parties.')) return;
+  try {
+    const res = await apiFetch(`/api/claims/${claimId}/confirm-return`, { method: 'POST' });
+    if (res.ok) {
+      showToast('Handover confirmed! Item is marked as resolved.', 'success');
+      if (evidenceModal) evidenceModal.hide();
+      loadIncomingClaims();
+      loadMyReports();
+    } else {
+      const msg = await res.text();
+      showToast(msg || 'Failed to confirm return', 'error');
+    }
+  } catch (e) {
+    showToast('Network error confirming handover', 'error');
+  }
 }
 
 function escHtml(s) {
